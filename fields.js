@@ -613,7 +613,7 @@ var FileField = exports.FileField = BaseField.extend({
                         fs.unlink(req.files[self.name].path);
                         self.value = {
                             path:res.socket._httpMessage.url,
-                            url:res.socket._httpMessage.url,
+                            url:res.socket._httpMessage.url.replace(/https:/,'http:'),
                             size:req.files[self.name].size};
 						console.log(res);
 						console.log(res.socket._httpMessage.url);
