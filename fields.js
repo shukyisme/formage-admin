@@ -587,7 +587,7 @@ var FileField = exports.FileField = BaseField.extend({
 		filename = filename.replace(/\s\-/g,'_');		
 		var ext = parts.length > 1 ? '.' + parts[parts.length-1] : '';
 		ext = ext.replace(/\s\-/g,'_');		
-        return '/' + filename + '_' + (Date.now()%1000) + ext;
+        return filename + '_' + (Date.now()%1000) + ext;
     },
     clean_value : function(req,callback)
     {
