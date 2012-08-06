@@ -609,7 +609,7 @@ var FileField = exports.FileField = BaseField.extend({
                     var stream = fs.createReadStream(req.files[self.name].path);
                     var filename = self.create_filename(req.files[self.name]);
 
-                    client.putStream(stream, '/' + filename, function(err, res){
+                    client.putStream(stream, '/' + filename,{}, function(err, res){
                         fs.unlink(req.files[self.name].path);
                         self.value = {
                             path:res.socket._httpMessage.url,
