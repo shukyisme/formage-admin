@@ -258,7 +258,7 @@ var BaseForm = exports.BaseForm = Class.extend({
                 self.fields[field_name].clean_value(self.request,function(err)
                 {
                     if(err)
-                        callback(err);
+                        cbk(err);
                     else
                     {
                         if(self.fields[field_name].errors && self.fields[field_name].errors.length)

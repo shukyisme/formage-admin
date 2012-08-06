@@ -184,15 +184,23 @@ var ChoicesWidget = exports.ChoicesWidget = Widget.extend({
         res.write('<select ');
         this.render_attributes(res);
         res.write(' >');
+        var found_selected = false;
         if(!this.required)
         {
             var selected = this.value ? '' : 'selected="selected" ';
+            if(selected)
+                found_selected = true;
             res.write('<option ' + selected + 'value=""> ---- </option>');
         }
         for(var i=0; i<this.choices.length; i++)
         {
             var selected = this.isSelected(this.choices[i]) ? 'selected="selected" ' : '';
+	    if(selected)
+                found_selected = true;
             res.write('<option ' + selected + 'value="' + this.choices[i] + '">' + this.names[i] + '</option>');
+        }
+        if(!found_selected) {
+            res.write('<option selected="selected" value="' + this.value + '">Current</option>');
         }
         res.write('</select>');
         return this;
