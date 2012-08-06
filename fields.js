@@ -610,6 +610,12 @@ var FileField = exports.FileField = BaseField.extend({
                     var filename = self.create_filename(req.files[self.name]);
 
                     client.putStream(stream, '/' + filename,{}, function(err, res){
+					    if(err) {
+                            console.error('upload to amazon failed', err);
+                            console.trace();
+                            callback(err);
+                            return;
+                        }
                         fs.unlink(req.files[self.name].path);
                         self.value = {
                             path:res.socket._httpMessage.url,
