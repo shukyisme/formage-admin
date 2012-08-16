@@ -433,7 +433,17 @@ var MongooseForm = exports.MongooseForm = BaseForm.extend({
         var is_required = mongoose_field.options.required ? true : false;
         var def = mongoose_field.options['default'];
         var validators = [];
-        var options = {required:is_required,'default':def,validators:validators,label:mongoose_field.options.label || name, limit: mongoose_field.options.limit};
+        var options = _.clone(mongoose_field.options);
+        _.extend(options,{
+            required:is_required,
+            'default':def,
+            validators:validators,
+            label:mongoose_field.options.label || name,
+            limit: mongoose_field.options.limit,
+            attrs:mongoose_field.options.attrs|| {},
+            widget: mongoose_field.options.widget
+        });
+
         if(mongoose_field.options.validate)
         {
             validators.push(function(value)
@@ -579,13 +589,11 @@ var MongooseForm = exports.MongooseForm = BaseForm.extend({
 
            if(err)
            {
+               console.error(err);
+               console.trace();
                if(err.errors)
                     self.errors = err.errors;
-               else {
-                   console.error(err);
-                   console.trace();
-               } 
-			   callback({message:'failed'});
+	       callback({message:'failed'});
            }
            else
            {
@@ -595,13 +603,6 @@ var MongooseForm = exports.MongooseForm = BaseForm.extend({
     }
 });
 
-var AdminForm = exports.AdminForm = MongooseForm.extend({
-    init: function(request,options,model)
-    {
-        this._super(request,options,model);
-        this.static['js'].push('/node-forms/js/jquery-ui-1.8.18.custom.min.js');
-        this.static['css'].push('/node-forms/css/ui-lightness/jquery-ui-1.8.18.custom.css');
-        this.static['css'].push('/node-forms/css/forms.css');
-    }
-});
+
+
 

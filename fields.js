@@ -17,10 +17,12 @@ catch(e)
 var BaseField = exports.BaseField = Class.extend({
     init: function(options) {
         options = options || {};
+        this.options = options;
         this['default'] = options['default'];
         this.required = options.required != null ? options.required : false;
         this.validators = options.validators || [];
         var widget_options = options.widget_options || {};
+        options.widget_options = widget_options;
         widget_options.attrs = options.attrs || {};
         widget_options.required = widget_options.required != null ? widget_options.required : this.required;
         this.widget = new options.widget(widget_options);
@@ -117,6 +119,8 @@ var BaseField = exports.BaseField = Class.extend({
         return this;
     },
     pre_render : function(callback) {
+        this.widget.name = this.name;
+        this.widget.value = this.value;
         this.widget.pre_render(callback);
     }
 });
@@ -418,9 +422,15 @@ var ListField = exports.ListField = BaseField.extend({
         var funcs = [];
         var self = this;
 
+        self.widget.name = self.name;
+        self.widget.value = self.value;
+
         function pre_render_partial(field)
         {
             return function(cbk) {
+                self.fields[field].value = _.map(self.value || [],function(obj) {
+                    return (obj && obj[field]) || '';
+                });
                 self.fields[field].pre_render(function(err,results)
                 {
                     cbk(err,results);
@@ -452,8 +462,8 @@ var ListField = exports.ListField = BaseField.extend({
             var prefix = self.name + '_li' + i + '_';
             self.render_list_item(res,self.fields,self.fieldsets,prefix,self.value[i]);
         }
-        self.widget.name = self.name;
-        self.widget.value = self.value;
+        this.widget.name = this.name;
+        this.widget.value = this.value;
         self.widget.render(res,render_template,render_item);
         return self;
     },
@@ -634,7 +644,7 @@ var FileField = exports.FileField = BaseField.extend({
                     var is = fs.createReadStream(req.files[self.name].path);
 
                     var filename = self.create_filename(req.files[self.name]);
-                    var os = fs.createWriteStream(self.directory + filename);
+                    var os = fs.createWriteStream(self.directory + '/' + filename);
 
                     util.pump(is, os, function(err) {
                         fs.unlink(req.files[self.name].path,function(err)

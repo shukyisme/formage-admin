@@ -6,10 +6,10 @@ exports.loadTypes = function(mongoose)
     {
         File.super_.call(this,path,options);
     };
-    util.inherits(File,mongoose.SchemaTypes.Mixed);
+    util.inherits(File,mongoose.Schema.Types.Mixed);
 
     mongoose.Types.File = Object;
-    mongoose.SchemaTypes.File = File;
+    mongoose.Schema.Types.File = File;
 
     exports.File = File;
 
@@ -19,7 +19,7 @@ exports.loadTypes = function(mongoose)
     {
         Integer.super_.call(this, path, options);
     };
-    util.inherits(Integer,mongoose.SchemaTypes.Number);
+    util.inherits(Integer,mongoose.Schema.Types.Number);
     Integer.prototype.cast = function(value,doc,init)
     {
         var num = Integer.super_.prototype.cast.call(this, value, doc, init);
@@ -27,29 +27,29 @@ exports.loadTypes = function(mongoose)
     };
 
     mongoose.Types.Integer = Number;
-    mongoose.SchemaTypes.Integer = Integer;
+    mongoose.Schema.Types.Integer = Integer;
 
     exports.Integer = Integer;
     
     var GeoPoint = function GeoPoint(path,options) {
         GeoPoint.super_.call(this,path,options);
     };
-    util.inherits(GeoPoint,mongoose.SchemaTypes.Mixed);
+    util.inherits(GeoPoint,mongoose.Schema.Types.Mixed);
 
     exports.GeoPoint = GeoPoint;
 
     mongoose.Types.GeoPoint = Object;
-    mongoose.SchemaTypes.GeoPoint = GeoPoint;
+    mongoose.Schema.Types.GeoPoint = GeoPoint;
 
     var Text = function Text(path,options) {
         Text.super_.call(this,path,options);
     };
-    util.inherits(Text,mongoose.SchemaTypes.String);
+    util.inherits(Text,mongoose.Schema.Types.String);
 
     exports.Text = Text;
 
     mongoose.Types.Text = String;
-    mongoose.SchemaTypes.Text = Text;
+    mongoose.Schema.Types.Text = Text;
 
     var Html = function Html(path,options) {
         Html.super_.call(this,path,options);
@@ -59,6 +59,6 @@ exports.loadTypes = function(mongoose)
     exports.Html = Html;
 
     mongoose.Types.Html = String;
-    mongoose.SchemaTypes.Html = Html;
+    mongoose.Schema.Types.Html = Html;
 };
 

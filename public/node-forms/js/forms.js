@@ -63,6 +63,8 @@ $(document).ready(function(){
                 }));
                 list.prepend(new_elm);
                 init_listfield();
+                if(window.loadAutocomplete)
+                    loadAutocomplete();
             }
             add_new();
             list.sortable({

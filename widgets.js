@@ -13,6 +13,7 @@ var Widget = exports.Widget = Class.extend({
         this.attrs = options.attrs || {};
         this.attrs.class = this.attrs.class || [];
         this.attrs.class.push(this.required ? 'required_label' : 'optional_label');
+        this.data = options.data || {};
         this.name = '';
         this.value = null;
         options.static = options.static || {};
@@ -33,10 +34,13 @@ var Widget = exports.Widget = Class.extend({
     {
         this.attrs['name'] = this.name;
         this.attrs['id'] = 'id_' + this.name;
-        for(var attr in this.attrs)
-        {
+        for(var attr in this.attrs) {
             var value = Array.isArray(this.attrs[attr]) ? this.attrs[attr].join(' ') : this.attrs[attr];
             res.write(' ' + attr + '="' + escape_html(value) + '"');
+        }
+        for(var attr in this.data) {
+            var value = Array.isArray(this.data[attr]) ? this.data[attr].join(' ') : this.data[attr];
+            res.write(' data-' + attr + '="' + escape_html(value) + '"');
         }
         return this;
     }
@@ -115,9 +119,9 @@ var DateWidget = exports.DateWidget = InputWidget.extend({
     {
         this._super('text',options);
         this.attrs.class.push('nf_datepicker');
-        this.static.js.push('/node-forms/js/jquery-ui-1.8.18.custom.min.js');
+        this.static.js.push('/node-forms/js/jquery-ui-1.8.22.custom.min.js');
         this.static.js.push('/node-forms/js/jquery-ui-timepicker-addon.js');
-        this.static.css.push('/node-forms/css/ui-lightness/jquery-ui-1.8.18.custom.css');
+        this.static.css.push('/node-forms/css/ui-lightness/jquery-ui-1.8.22.custom.css');
     }
 });
 
@@ -165,15 +169,11 @@ var ChoicesWidget = exports.ChoicesWidget = Widget.extend({
         else
             return choice == this.value;
     },
-    render : function(res)
-    {
-        if(!this.names)
-        {
+    prepareValues: function(){
+        if(!this.names) {
             this.names = new Array(this.choices.length);
-            for(var i=0; i<this.choices.length; i++)
-            {
-                if(typeof(this.choices[i]) == 'object')
-                {
+            for(var i=0; i<this.choices.length; i++) {
+                if(typeof(this.choices[i]) == 'object') {
                     this.names[i] = this.choices[i][1];
                     this.choices[i] = this.choices[i][0];
                 }
@@ -181,6 +181,10 @@ var ChoicesWidget = exports.ChoicesWidget = Widget.extend({
                     this.names[i] = this.choices[i];
             }
         }
+    },
+    render : function(res)
+    {
+        this.prepareValues();
         res.write('<select ');
         this.render_attributes(res);
         res.write(' >');
@@ -199,7 +203,7 @@ var ChoicesWidget = exports.ChoicesWidget = Widget.extend({
                 found_selected = true;
             res.write('<option ' + selected + 'value="' + this.choices[i] + '">' + this.names[i] + '</option>');
         }
-        if(!found_selected) {
+        if(!found_selected && this.value) {
             res.write('<option selected="selected" value="' + this.value + '">Current</option>');
         }
         res.write('</select>');
@@ -219,7 +223,7 @@ var RefWidget = exports.RefWidget = ChoicesWidget.extend({
     {
         var self = this;
         var base = self._super;
-        this.ref.find({}).limit(self.limit).run(function(err,objects)
+        this.ref.find({}).limit(self.limit).exec(function(err,objects)
         {
             if(err)
                 callback(err);
@@ -297,7 +301,88 @@ var MapWidget = exports.MapWidget = InputWidget.extend({
     }
 });
 
-    
+
+
+var ComboBoxWidget = exports.ComboBoxWidget = ChoicesWidget.extend({
+    init: function(options)  {
+        this._super(options);
+        this.static = this.static || {};
+        this.static.js = this.static.js || [];
+        this.static.js.push('/node-forms/js/autocomplete.js');
+
+        this.attrs.class.push('nf_combo');
+    }
+});
+
+
+var AutocompleteWidget = exports.AutocompleteWidget = TextWidget.extend({
+    init: function(options)  {
+        options = options || {};
+        this._super(options);
+        this.static = this.static || {};
+        this.static.js = this.static.js || [];
+        this.static.js.push('/node-forms/js/autocomplete.js');
+
+        this.attrs.class.push('nf_ref');
+
+
+
+        if(!options.url)
+            throw new Error('must specify url');
+
+        this.data = this.data || {};
+        this.data.url = this.data.url || options.url;
+        this.data.data = this.data.data || options.data;
+
+        this.ref = options.ref;
+        if(!this.ref)
+            throw new TypeError('model was not provided');
+    },
+
+    pre_render:function(callback) {
+        var self = this;
+        var base = this._super;
+        var id = this.value;
+        self.data['name'] = id || '';
+        if(id) {
+            var query;
+            if(Array.isArray(id))
+                query = this.ref.find().where('_id').in(id);
+            else
+                query = this.ref.findById(id);
+            query.exec(function(err,doc) {
+                if(err)
+                    callback(err);
+                else {
+                    if(doc)
+                        self.doc = doc;
+                    base.call(self,callback);
+                }
+            });
+        }
+        else
+            base.call(self,callback);
+    },
+
+    render: function(res) {
+        var self = this;
+        var name = self.value;
+        if(self.doc) {
+            if(Array.isArray(this.doc)) {
+                name = (_.find(this.doc,function(doc) {
+                    return doc.id == self.value;
+                }) || '').toString()
+            }
+            else
+                name = self.doc.toString();
+        }
+        self.data.name = name || '';
+        self._super(res);
+    }
+
+
+});
+
     
     
     
