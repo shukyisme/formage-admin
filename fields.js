@@ -335,15 +335,17 @@ var ListField = exports.ListField = BaseField.extend({
         var self = this;
         var base = self._super;
         var prefix = self.name + '_li';
-        this.value = [];
+        var old_list_value = self.value;
+        self.value = [];
         var clean_funcs = [];
         var inner_body = {};
         var inner_files = {};
-        function create_clean_func(field_name,post_data,file_data,output_data)//num,name,value)
+        function create_clean_func(field_name,post_data,file_data,output_data, old_value)//num,name,value)
         {
             return function(cbk)
             {
                 var field = self.fields[field_name];
+                field = _.clone(field);
                 field.name = field_name;
                 var old_body = req.body;
                 var request_copy = {};
@@ -351,17 +353,13 @@ var ListField = exports.ListField = BaseField.extend({
                     request_copy[key] = req[key];
                 request_copy.body = post_data;
                 request_copy.files = file_data;
-                field.set(post_data[field_name],request_copy);
-                field.clean_value(request_copy,function(err)
-                {
+                var old_field_value = (typeof(post_data[field_name]) == 'undefined' ||  post_data[field_name] == null) ? (old_value.get ? old_value.get(field_name) : old_value[field_name] ) : post_data[field_name];
+                field.set(old_field_value,request_copy);
+                field.clean_value(request_copy,function(err){
                     if(field.errors && field.errors.length)
-                        this.errors = _.union(self.errors,field.errors);
+                        self.errors = _.union(self.errors,field.errors);
                     else
-                    {
                         output_data[field_name] = field.value;
-    //                    if(name == '__self__')
-    //                        values[num] = field.value;
-                    }
                     cbk(null);
                 });
             }
@@ -394,15 +392,19 @@ var ListField = exports.ListField = BaseField.extend({
                 //clean_funcs.push(create_clean_func(num,name,req.body[field_name]));
             }
         }
-        for(var key in inner_body)
-        {
+        var field_names = _.chain(Object.keys(inner_body))
+            .union(Object.keys(inner_files))
+            .unique()
+            .value();
+
+        field_names.forEach(function(key) {
             var output_data = {};
-            this.value.push(output_data);
+            self.value.push(output_data);
             for(var field_name in self.fields)
             {
-                clean_funcs.push(create_clean_func(field_name,inner_body[key],inner_files[key],output_data));
+                clean_funcs.push(create_clean_func(field_name,inner_body[key] || {},inner_files[key] || {},output_data,old_list_value[key] || {}));
             }
-        }
+        });
         async.parallel(clean_funcs,function(err)
         {
             for(var i=0; i<self.value.length; i++)

@@ -262,17 +262,13 @@ var ListWidget = exports.ListWidget = Widget.extend({
 });
 
 var FileWidget = exports.FileWidget = InputWidget.extend({
-	init: function(options)
-    {
+	init: function(options) {
         this._super('file', options);
     },
-    render : function(res)
-    {
+    render : function(res) {
         this._super(res);
         if(this.value && this.value.path)
-        {
-            res.write('<label>Clear<input type="checkbox" name="' + this.name +'_clear" value="Clear" /> <a href="' + this.value.url + '">' + this.value.path + '</a></label>');
-        }
+            res.write('Clear<input type="checkbox" name="' + this.name +'_clear" value="Clear" /> <a href="' + this.value.url + '">' + this.value.path + '</a>');
     }
 });
 
