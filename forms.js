@@ -117,11 +117,11 @@ var BaseForm = exports.BaseForm = Class.extend({
         this.static = options.static || {};
         this.static['js'] = this.static['js'] || [];
         this.static['css'] = this.static['css'] || [];
-        this.static['js'].push('http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js');
+        this.static['js'].push('//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js');
         this.static['js'].push('/node-forms/js/forms.js');
 //        this.static['js'].push('/node-forms/js/jquery-ui-1.8.18.custom.min.js');
  //       this.static['js'].push('/node-forms/js/jquery-ui-timepicker-addon.js');
- //       this.static['js'].push('https://maps-api-ssl.google.com/maps/api/js?v=3&sensor=false&language=he&libraries=places');
+ //       this.static['js'].push('//maps-api-ssl.google.com/maps/api/js?v=3&sensor=false&language=he&libraries=places');
  //       this.static['js'].push('/node-forms/js/maps.js');
 //        this.static['css'].push('/node-forms/css/ui-lightness/jquery-ui-1.8.18.custom.css');
 //        this.static['css'].push('/node-forms/css/forms.css');
