@@ -576,6 +576,8 @@ exports.getKnoxClient = function() {
     return client;
 };
 
+var global_counter = 0;
+
 
 var FileField = exports.FileField = BaseField.extend({
     init: function(options)
@@ -600,7 +602,7 @@ var FileField = exports.FileField = BaseField.extend({
 		filename = filename.replace(/\s\-/g,'_');		
 		var ext = parts.length > 1 ? '.' + parts[parts.length-1] : '';
 		ext = ext.replace(/\s\-/g,'_');		
-        return filename + '_' + (Date.now()%1000) + ext;
+        return filename + '_' + ((Date.now() + global_counter++) %1000) + ext;
     },
     clean_value : function(req,callback)
     {
