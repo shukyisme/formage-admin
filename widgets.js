@@ -48,7 +48,7 @@ var Widget = exports.Widget = Class.extend({
 
 function escape_html(str)
 {
-    return (str + '').replace(/</g,'&lt').replace(/>/g,'&gt').replace(/"/,'&quot');
+    return (str + '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 }
 
 var InputWidget = exports.InputWidget = Widget.extend({
