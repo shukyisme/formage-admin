@@ -342,9 +342,10 @@ var AutocompleteWidget = exports.AutocompleteWidget = TextWidget.extend({
         self.data['name'] = id || '';
         if(id) {
             var query;
-            if(Array.isArray(id))
+            if(Array.isArray(id)) {
+                id = id.filter(function(x) {return x;});
                 query = this.ref.find().where('_id').in(id);
-            else
+            } else
                 query = this.ref.findById(id);
             query.exec(function(err,doc) {
                 if(err)
