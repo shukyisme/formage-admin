@@ -15,8 +15,10 @@ exports.loadTypes = function(mongoose)
     util.inherits(File,mongoose.Schema.Types.Mixed);
     File.prototype.cast = function(value,doc,init) {
         var ret =  File.super_.prototype.cast.call(this,value,doc,init);
-        if(ret && ret.path && CDN_PREFIX)
-            ret.url = CDN_PREFIX + ret.path;
+        if(ret && ret.path && CDN_PREFIX) {
+		    var file_parts = ret.path.split('/');
+            ret.url = CDN_PREFIX + file_parts[file_parts.length-1];
+		}
         return ret;
     };
 
