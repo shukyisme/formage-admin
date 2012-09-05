@@ -1,5 +1,11 @@
 var util = require('util');
 
+var CDN_PREFIX = '';
+
+exports.setCdnPrefix = function(prefix) {
+    CDN_PREFIX = prefix;
+};
+
 exports.loadTypes = function(mongoose)
 {
     var File = function File(path,options)
@@ -7,6 +13,12 @@ exports.loadTypes = function(mongoose)
         File.super_.call(this,path,options);
     };
     util.inherits(File,mongoose.Schema.Types.Mixed);
+    File.prototype.cast = function(value,doc,init) {
+        var ret =  File.super_.prototype.cast.call(this,value,doc,init);
+        if(ret && ret.path && CDN_PREFIX)
+            ret.url = CDN_PREFIX + ret.path;
+        return ret;
+    };
 
     mongoose.Types.File = Object;
     mongoose.Schema.Types.File = File;
