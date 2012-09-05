@@ -17,7 +17,8 @@ exports.loadTypes = function(mongoose)
         var ret =  File.super_.prototype.cast.call(this,value,doc,init);
         if(ret && ret.path && CDN_PREFIX) {
 		    var file_parts = ret.path.split('/');
-            ret.url = CDN_PREFIX + file_parts[file_parts.length-1];
+			ret.path = file_parts[file_parts.length-1];
+            ret.url = CDN_PREFIX + ret.path;
 		}
         return ret;
     };
