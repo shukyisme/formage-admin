@@ -8,7 +8,6 @@ var Widget = exports.Widget = Class.extend({
         this.options = options;
         this.limit = this.options.limit || 50;
         this.required = options.required || false;
-        this.attrs = options.attrs || {};
         this.validators = options.validators || [];
         this.attrs = options.attrs || {};
         this.attrs.class = this.attrs.class || [];
@@ -117,7 +116,7 @@ var RichTextAreaWidget = exports.RichTextAreaWidget = TextAreaWidget.extend({
 var DateWidget = exports.DateWidget = InputWidget.extend({
 	init: function(options)
     {
-        this._super('text',options);
+        this._super('datetime', options);
         this.attrs.class.push('nf_datepicker');
         this.static.js.push('/node-forms/js/jquery-ui-1.8.22.custom.min.js');
         this.static.js.push('/node-forms/js/jquery-ui-timepicker-addon.js');
