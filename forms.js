@@ -117,14 +117,10 @@ var BaseForm = exports.BaseForm = Class.extend({
         this.static = options.static || {};
         this.static['js'] = this.static['js'] || [];
         this.static['css'] = this.static['css'] || [];
+        this.static['inline-style'] = this.static['inline-style'] || [];
+        this.static['inline-script'] = this.static['inline-script'] || [];
         this.static['js'].push('//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js');
         this.static['js'].push('/node-forms/js/forms.js');
-//        this.static['js'].push('/node-forms/js/jquery-ui-1.8.18.custom.min.js');
- //       this.static['js'].push('/node-forms/js/jquery-ui-timepicker-addon.js');
- //       this.static['js'].push('//maps-api-ssl.google.com/maps/api/js?v=3&sensor=false&language=he&libraries=places');
- //       this.static['js'].push('/node-forms/js/maps.js');
-//        this.static['css'].push('/node-forms/css/ui-lightness/jquery-ui-1.8.18.custom.css');
-//        this.static['css'].push('/node-forms/css/forms.css');
         this.handle_empty = options.empty;
         this.handle_success = options.success;
         this.handle_error = options.error;
@@ -183,16 +179,11 @@ var BaseForm = exports.BaseForm = Class.extend({
     {
         var self = this;
         self.get_static();
-        return common.writer_to_string(function(res)
-        {
-            if(!self.static)
-                return;
-            if(self.static['js'])
-                for(var i=0; i<self.static['js'].length; i++)
-                    res.write('<script src="' + self.static['js'][i] + '"></script>')
-            if(self.static['css'])
-                for(var i=0; i<self.static['css'].length; i++)
-                    res.write('<link type="text/css" href="' + self.static['css'][i] + '" rel="stylesheet">');
+        return common.writer_to_string(function(res) {
+            self.static['js'].forEach(function(obj, idx) { res.write('<script src="' + obj + '"></script>'); });
+            self.static['css'].forEach(function(obj, idx) { res.write('<link type="text/css" href="' + obj + '" rel="stylesheet">'); });
+            self.static['inline-style'].forEach(function(obj, idx) { res.write('<style>' + obj + '</style>'); });
+            self.static['inline-script'].forEach(function(obj, idx) { res.write('<script>' + obj + '</script>'); });
         },1000);
     },
     get_fields : function()
@@ -329,17 +320,17 @@ var BaseForm = exports.BaseForm = Class.extend({
         {
             if(!fieldset || !fieldset.fields || !fieldset.fields.length)
                 return;
-            if(fieldset['title'] && fieldset['title'] != '' && !options.hide_fieldsets)
+            if(fieldset['title'] && fieldset['title'] != '' && !options['hide_fieldsets'])
                 res.write('<div class="nf_fieldset">');
             var title = fieldset['title'] || '';
-            if(title != '' && !options.hide_titles)
+            if(title != '' && !options['hide_titles'])
                 res.write('<h2>' + title + '</h2>');
             res.write('<div>');
             var fields = fieldset.fields;
             if(fields)
                 render_fields(fields);
             res.write('</div>');
-            if(fieldset['title'] && fieldset['title'] != '' && !options.hide_fieldsets)
+            if(fieldset['title'] && fieldset['title'] != '' && !options['hide_fieldsets'])
                 res.write("</div>");
         };
         if(self.fieldsets)
