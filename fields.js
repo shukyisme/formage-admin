@@ -433,9 +433,9 @@ var ListField = exports.ListField = BaseField.extend({
         function pre_render_partial(field)
         {
             return function(cbk) {
-                self.fields[field].value = _.map(self.value || [],function(obj) {
+                self.fields[field].set(_.map(self.value || [],function(obj) {
                     return (obj && obj[field]) || '';
-                });
+                }));
                 self.fields[field].pre_render(function(err,results)
                 {
                     cbk(err,results);
@@ -522,12 +522,12 @@ var ListField = exports.ListField = BaseField.extend({
             fields[field_name].name = prefix + field_name;
             if(field_name != '__self__')
             {
-                fields[field_name].value = value ? self.deep_read(value,field_name) : null;
+                fields[field_name].set(value ? self.deep_read(value,field_name) : null);
                 fields[field_name].render_with_label(res);
             }
             else
             {
-                fields[field_name].value = value;
+                fields[field_name].set(value);
                 fields[field_name].render(res);
             }
         };
