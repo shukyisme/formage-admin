@@ -69,8 +69,10 @@ $(document).ready(function(){
                         .unbind()
                         .datetimepicker();
                 init_listfield();
-                if(window.loadAutocomplete)
-                    loadAutocomplete();
+                if(window.loadAutocomplete){
+                    destroyAutocomplete(new_elm);
+                    loadAutocomplete(new_elm);
+                }
             }
             add_new();
             list.sortable({
@@ -100,6 +102,8 @@ $(document).ready(function(){
     }
     init_listfield();
     update_fieldset_behavior();
+    if(window.loadAutocomplete)
+        loadAutocomplete();
 });
 
 function go_back()

@@ -97,11 +97,15 @@ $(function() {
                         input.autocomplete( "search", "" );
                         input.focus();
                     });
+
+                this.element.addClass('nfDidCombo');
+
             },
 
             destroy: function() {
                 this.wrapper.remove();
                 this.element.show();
+                this.element.removeClass('nfDidCombo');
                 $.Widget.prototype.destroy.call( this );
             }
         });
@@ -139,17 +143,34 @@ $(function() {
                                 hidden.val(ui.item.id);
                             }
                         });
+                this.element.addClass('nfDidRef');
+            },
+
+            destroy: function() {
+                this.wrapper.remove();
+                this.element.show();
+                this.element.removeClass('nfDidRef');
+                $.Widget.prototype.destroy.call( this );
             }
         });
     })( jQuery );
 
 
-    window.loadAutocomplete = function(){
-        $('.nf_combo').combobox();
+    window.loadAutocomplete = function( sender){
+        $('.nf_combo:not(.nfDidCombo)', sender || document).combobox();
 
-        $('.nf_ref').ref();
+        $('.nf_ref:not(.nfDidRef)', sender || document).ref();
 
-    }
+    };
+
+    window.destroyAutocomplete = function(sender) {
+        sender = sender || document;
+        $('.nfDidRef',sender).removeClass('nfDidRef');
+        $('.ui-ref',sender).remove();
+        $('.nfDidCombo',sender).removeClass('nfDidCombo');
+        $('.ui-combo',sender).remove();
+
+    };
 
     loadAutocomplete();
 
