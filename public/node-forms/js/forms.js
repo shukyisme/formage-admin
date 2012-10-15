@@ -62,6 +62,12 @@ $(document).ready(function(){
                     update_fieldset_behavior();
                 }));
                 list.prepend(new_elm);
+                if($().datetimepicker)
+                    $('.nf_datepicker',new_elm).attr("id", "")
+                        .removeClass('hasDatepicker')
+                        .removeData('datepicker')
+                        .unbind()
+                        .datetimepicker();
                 init_listfield();
                 if(window.loadAutocomplete)
                     loadAutocomplete();
@@ -87,6 +93,9 @@ $(document).ready(function(){
                 items:'li:not(.new_li)',
                 handle:'.nf_listfield_drag'
             });
+            if($().datetimepicker)
+                $('.nf_datepicker',this).datetimepicker();
+
         });
     }
     init_listfield();
