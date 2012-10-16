@@ -626,7 +626,7 @@ var FileField = exports.FileField = BaseField.extend({
                     var stream = fs.createReadStream(req.files[self.name].path);
                     var filename = self.create_filename(req.files[self.name]);
 
-                    client.putStream(stream, '/' + filename,{}, function(err, res){
+                    client.putStream(stream, '/' + filename,{'Content-Length':req.files[self.name].size}, function(err, res){
                         if(err) {
                             if(err.socket && err.socket._httpMessage)
                                 res = err;
