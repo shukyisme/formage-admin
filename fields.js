@@ -180,12 +180,10 @@ var BooleanField = exports.BooleanField = BaseField.extend({
     },
     clean_value : function(req,callback)
     {
-        if(this.name in req.body) {
-            if(req.body[this.name] && req.body[this.name] != '')
-                this.value = true;
-            else
-                this.value = false;
-        }
+        if(req.body[this.name] && req.body[this.name] != '')
+            this.value = true;
+        else
+            this.value = false;
         this._super(req,callback);
         return this;
     }
