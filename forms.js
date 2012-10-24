@@ -582,8 +582,15 @@ var MongooseForm = exports.MongooseForm = BaseForm.extend({
            {
                console.error(err);
                console.trace();
-               if(err.errors)
-                    self.errors = err.errors;
+               if(err.errors){
+                   self.errors ={}
+                   _.each(err.errors,function(error,key) {
+                       if(self.fields[key] instanceof fields.BaseField) {
+                           self.errors[key] = [error.message || error];
+                           self.fields[key].errors = self.errors[key];
+                       }
+                   });
+               }
 	       callback({message:'failed'});
            }
            else
