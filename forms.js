@@ -586,7 +586,7 @@ var MongooseForm = exports.MongooseForm = BaseForm.extend({
                    self.errors ={}
                    _.each(err.errors,function(error,key) {
                        if(self.fields[key] instanceof fields.BaseField) {
-                           self.errors[key] = [error.message || error];
+                           self.errors[key] = [error.type || error.message || error];
                            self.fields[key].errors = self.errors[key];
                        }
                    });
