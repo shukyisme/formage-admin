@@ -13,7 +13,6 @@ module.exports.setAmazonCredentials = module.exports.fields.setAmazonCredentials
 
 module.exports.register_models = module.exports.forms.set_models;
 
-module.exports.serve_static = function(app,express)
-{
-    app.use(express.static(require('path').join(__dirname,'public')));
+module.exports.serve_static = function(app,express) {
+    app.use(require('express').static(require('path').join(__dirname,'public')));
 };
