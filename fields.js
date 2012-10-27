@@ -680,6 +680,56 @@ var FileField = exports.FileField = BaseField.extend({
 
     }
 });
+var PictureField = exports.PictureField = BaseField.extend({
+    init: function(options)
+    {
+        options = options || {};
+        options.widget = options.widget || widgets.PictureWidget;
+        this._super(options);
+    },
+    to_schema : function()
+    {
+        return {
+            public_id: String,
+            version: Number,
+            signature: String,
+            width: Number,
+            height: Number,
+            format: String,
+            resource_type: String,
+            url: String,
+            secure_url: String,
+            eager: [Object],
+            original_name: String,
+            original_size: Number
+        }
+
+    },
+    create_filename : function(file)
+    {
+        return file;
+    },
+    clean_value : function(req, callback)
+    {
+        var self = this;
+        var base = self._super;
+        self.value = self.value || {};
+
+        if(self.value && self.value.url && req.body[self.name + '_clear']){
+            self.value = null;
+        }
+
+        if(req.files && req.files[self.name] && req.files[self.name].name) {
+            require('cloudinary').uploader.upload(req.files[self.name].path, function(result) {
+                result.original_name = req.files[self.name].name;
+                result.original_size = req.files[self.name].size;
+                self.value = result;
+                callback(null);
+            });
+        }else
+            callback(null);
+    }
+});
 
 var GeoField = exports.GeoField = BaseField.extend({
     init:function(options)

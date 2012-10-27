@@ -521,6 +521,9 @@ var MongooseForm = exports.MongooseForm = BaseForm.extend({
         if(mongoose_field.options.type.name == 'File')
             return new fields.FileField(options);
 
+        if(mongoose_field.options.type.name == 'Picture')
+            return new fields.PictureField(options);
+
         if(mongoose_field.options.type.name == 'GeoPoint')
             return new fields.GeoField(options);
 

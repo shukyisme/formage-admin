@@ -275,6 +275,17 @@ var FileWidget = exports.FileWidget = InputWidget.extend({
     }
 });
 
+var PictureWidget = exports.PictureWidget = InputWidget.extend({
+    init: function(options) {
+        this._super('file', options);
+    },
+    render : function(res) {
+        this._super(res);
+        if(this.value && this.value.url)
+            res.write('Clear<input type="checkbox" name="' + this.name +'_clear" value="Clear" /> <a href="' + this.value.url + '">' + this.value.original_name + '</a>');
+    }
+});
+
 var MapWidget = exports.MapWidget = InputWidget.extend({
 	init: function(options)
     {

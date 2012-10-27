@@ -28,6 +28,19 @@ exports.loadTypes = function(mongoose)
 
     exports.File = File;
 
+    var Picture = function Picture(path,options)
+    {
+        Picture.super_.call(this,path,options);
+    };
+    util.inherits(Picture,mongoose.Schema.Types.Mixed);
+    Picture.prototype.cast = function(value,doc,init) {
+        return Picture.super_.prototype.cast.call(this,value,doc,init);
+    };
+
+    mongoose.Types.Picture = Object;
+    mongoose.Schema.Types.Picture = Picture;
+
+    exports.Picture = Picture;
 
 
     var Integer = function Integer(path,options)
