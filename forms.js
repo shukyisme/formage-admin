@@ -1,19 +1,17 @@
-var Class = require('sji')
-    ,_ = require('underscore')
-    ,fields = require('./fields')
-    ,widgets = require('./widgets')
-    ,common = require('./common'),
-    mongoose = require('mongoose');
-    mongoose_types = require('./mongoose-types');
+var Class = require('sji'),
+    _ = require('underscore'),
+    fields = require('./fields'),
+    widgets = require('./widgets'),
+    common = require('./common'),
+    mongoose = require('mongoose'),
+    mongoose_types = require('./mongoose-types'),
+    async = require('async');
 
 mongoose_types.loadTypes(mongoose);
 
-var async = require('async');
-
 var Models = {};
 
-exports.set_models = function(models)
-{
+exports.set_models = function(models) {
     Models = models;
 };
 
@@ -119,7 +117,7 @@ var BaseForm = exports.BaseForm = Class.extend({
         this.static['css'] = this.static['css'] || [];
         this.static['inline-style'] = this.static['inline-style'] || [];
         this.static['inline-script'] = this.static['inline-script'] || [];
-        this.static['js'].push('//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js');
+        this.static['js'].push('/node-forms/js/jquery-1.8.2.min.js');
         this.static['js'].push('/node-forms/js/forms.js');
         this.handle_empty = options.empty;
         this.handle_success = options.success;
