@@ -358,7 +358,6 @@ var BaseForm = exports.BaseForm = Class.extend({
     }
 });
 
-
 var MongooseForm = exports.MongooseForm = BaseForm.extend({
     init: function(request,options,model)
     {

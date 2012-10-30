@@ -21,7 +21,7 @@ var BaseField = exports.BaseField = Class.extend({
         this['default'] = options['default'];
         this.required = options.required != null ? options.required : false;
         this.validators = options.validators || [];
-        var widget_options = options.widget_options || {};
+        var widget_options = _.extend({}, options, options.widget_options);
         options.widget_options = widget_options;
         widget_options.attrs = options.attrs || {};
         widget_options.required = widget_options.required != null ? widget_options.required : this.required;

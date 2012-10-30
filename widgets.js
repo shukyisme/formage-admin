@@ -107,9 +107,9 @@ var RichTextAreaWidget = exports.RichTextAreaWidget = TextAreaWidget.extend({
     },
     render:function(res)
     {
-        res.write('<div style="width:930px; padding-top:31px;">');
+        res.write('<div style="float: left; width:'+ (this.options.width || 930) +'px; padding-top:'+ (this.options.top || 31) +'px;">');
         this._super(res);
-        res.write('</div>');
+        res.write('</div><br clear="both">');
     }
 });
 
