@@ -1,7 +1,7 @@
 {
-  "name": "j-forms",
-  "description": "jewish forms creation from fields or from mongoose models",
-  "version": "0.0.74",
+  "name": "formage",
+  "description": "forms creation from fields or from mongoose models",
+  "version": "0.0.80",
   "author": {
     "name": "Ishai Jaffe",
     "email": "ishai@empeeric.com"
@@ -19,29 +19,16 @@
   },
   "main": "index",
   "keywords": [
+    "formage",
     "forms",
     "mongoose",
     "django"
   ],
   "repository": {
     "type": "git",
-    "url": "git@github.com:IshaiJaffe/nodejs-forms.git"
+    "url": "git@github.com:etaypere/formage.git"
   },
   "engines": {
     "node": ">= 0.4.1"
-  },
-  "_npmUser": {
-    "name": "ishai",
-    "email": "ishai@empeeric.com"
-  },
-  "_id": "j-forms@0.0.73",
-  "optionalDependencies": {},
-  "_engineSupported": true,
-  "_npmVersion": "1.1.24",
-  "_nodeVersion": "v0.6.19",
-  "_defaultsLoaded": true,
-  "dist": {
-    "shasum": "83b4a314166671dc0e23a4970fc0e34af78304f9"
-  },
-  "_from": "j-forms@>= 0.0.59"
+  }
 }
