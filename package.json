@@ -1,7 +1,7 @@
 {
   "name": "formage",
   "description": "forms creation from fields or from mongoose models",
-  "version": "0.0.80",
+  "version": "0.0.90",
   "author": {
     "name": "Ishai Jaffe",
     "email": "ishai@empeeric.com"
@@ -10,8 +10,8 @@
     "sji": "",
     "underscore": "",
     "mongoose": "",
-    "async": ""
-
+    "async": "",
+	"cloudinary": ""
   },
   "devDependencies": {
     "express": "",
