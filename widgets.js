@@ -1,5 +1,19 @@
-var Class = require('sji')
-    , _ = require('underscore');
+/*
+    TODO:
+    1. Time Widget
+    2. DateTime Widget
+    3. check Autocomplete
+    4. fix Map
+ */
+
+var Class = require('sji'),
+    _ = require('underscore');
+
+
+function escape_html (str) {
+    return (str + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
 
 var Widget = exports.Widget = Class.extend({
     init: function (options) {
@@ -40,9 +54,7 @@ var Widget = exports.Widget = Class.extend({
     }
 });
 
-function escape_html (str) {
-    return (str + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-}
+
 
 var InputWidget = exports.InputWidget = Widget.extend({
     init: function (type, options) {
@@ -84,7 +96,6 @@ var TextAreaWidget = exports.TextAreaWidget = Widget.extend({
         res.write('</textarea>');
         return this;
     }
-
 });
 
 var RichTextAreaWidget = exports.RichTextAreaWidget = TextAreaWidget.extend({
@@ -104,9 +115,14 @@ var DateWidget = exports.DateWidget = InputWidget.extend({
     init: function (options) {
         this._super('datetime', options);
         this.attrs.class.push('nf_datepicker');
-        this.static.js.push('/node-forms/js/jquery-ui-1.8.22.custom.min.js');
-        this.static.js.push('/node-forms/js/jquery-ui-timepicker-addon.js');
-        this.static.css.push('/node-forms/css/ui-lightness/jquery-ui-1.8.22.custom.css');
+        this.static.js.push('/node-forms/datepicker/bootstrap-datepicker.js');
+        this.static.css.push('/node-forms/datepicker/datepicker.css');
+    },
+    render: function (res) {
+        res.write('<div class="input-append date">');
+        this._super(res);
+        res.write('<span class="add-on"><i class="icon-calendar"></i></span>');
+        res.write('</div>');
     }
 });
 
@@ -173,7 +189,7 @@ var ChoicesWidget = exports.ChoicesWidget = Widget.extend({
             var selected = this.value ? '' : 'selected="selected" ';
             if (selected)
                 found_selected = true;
-            res.write('<option ' + selected + 'value=""> ---- </option>');
+            res.write('<option ' + selected + 'value=""> ... </option>');
         }
         for (var i = 0; i < this.choices.length; i++) {
             var selected = this.isSelected(this.choices[i]) ? 'selected="selected" ' : '';
@@ -288,8 +304,9 @@ var ComboBoxWidget = exports.ComboBoxWidget = ChoicesWidget.extend({
     init: function (options) {
         this._super(options);
         this.static.js.push('/node-forms/select2/select2.js');
+        this.static.css.push('/node-forms/select2/select2.css');
 
-        this.attrs.class.push('nf_combo');
+        this.attrs.class.push('nf_comb');
     }
 });
 
@@ -303,7 +320,6 @@ var AutocompleteWidget = exports.AutocompleteWidget = TextWidget.extend({
         this.static.js.push('/node-forms/js/autocomplete.js');
 
         this.attrs.class.push('nf_ref');
-
 
         if (!options.url)
             throw new Error('must specify url');
