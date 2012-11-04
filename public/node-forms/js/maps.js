@@ -1,16 +1,14 @@
-/**
- * Created by PyCharm.
- * User: roi
- * Date: 18/10/11
- * Time: 13:05
- * To change this template use File | Settings | File Templates.
+/*
+    TODO:
+    1. bigger icon
+    2. select by right click
+    3. strange map bug / doesn't show at all, when map is initially hidden
  */
 
-var maps = new Array();
+var maps = [];
 var geocoder = window.google ? new google.maps.Geocoder() : null;
 
-$.prototype.geopicker = function(params)
-{
+$.prototype.geopicker = function(params) {
     if(!this.length)
         return this;
     var defaults = {};
@@ -33,7 +31,7 @@ $.prototype.geopicker = function(params)
         {
             var num = Number(new Date());
             map_id = 'map' + num;
-            $('<div class="geopicker_map" id="' + map_id + '" style="width:300px; height:300px;"></div>').insertAfter(elm);
+            $('<div class="geopicker_map" id="' + map_id + '" style="height:300px;"></div>').insertAfter(elm);
         }
 
 ////        var button_id = defaults['button_id'];

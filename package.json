@@ -1,7 +1,7 @@
 {
   "name": "formage",
   "description": "forms creation from fields or from mongoose models",
-  "version": "0.0.80",
+  "version": "0.0.90",
   "author": {
     "name": "Ishai Jaffe",
     "email": "ishai@empeeric.com"
@@ -10,8 +10,8 @@
     "sji": "",
     "underscore": "",
     "mongoose": "",
-    "async": ""
-
+    "async": "",
+    "cloudinary": ""
   },
   "devDependencies": {
     "express": "",
@@ -30,5 +30,10 @@
   },
   "engines": {
     "node": ">= 0.4.1"
-  }
+  },
+  "_id": "formage@0.0.90",
+  "dist": {
+    "shasum": "3bc210e44422eaf19229177a2afd314b1ae04446"
+  },
+  "_from": "formage@https://github.com/etaypere/formage/tarball/master"
 }
