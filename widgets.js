@@ -311,8 +311,9 @@ exports.MapWidget = exports.InputWidget.extend({
     init: function (options) {
         this._super('hidden', options);
         this.attrs.class.push('nf_mapview');
-        this.static.js.push('//maps-api-ssl.google.com/maps/api/js?v=3&sensor=false&language=he&libraries=places');
+        this.static.js.push('//maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&language=he&libraries=places&key=AIzaSyCmNLGdcM_OYwPwmedDsECk9O6ashE-rjg');
         this.static.js.push('/node-forms/js/maps.js');
+        this.static.css.push('/node-forms/css/maps.css');
     },
 
     render: function (res) {
