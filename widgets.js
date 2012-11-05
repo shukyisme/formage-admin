@@ -1,6 +1,5 @@
 /*
     TODO:
-    1. Time Widget
     2. DateTime Widget
     3. check Autocomplete
     4. fix Map
@@ -10,8 +9,10 @@ var Class = require('sji'),
     _ = require('underscore');
 
 
-function escape_html (str) {
-    return (str + '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+function escape (str) {
+    return (str + '').replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 
 
@@ -42,63 +43,69 @@ var Widget = exports.Widget = Class.extend({
     render_attributes: function (res) {
         this.attrs['name'] = this.name;
         this.attrs['id'] = 'id_' + this.name;
+
         for (var attr in this.attrs) {
             var value = Array.isArray(this.attrs[attr]) ? this.attrs[attr].join(' ') : this.attrs[attr];
-            res.write(' ' + attr + '="' + escape_html(value) + '"');
+            res.write(' ' + attr + '="' + escape(value) + '"');
         }
         for (var attr in this.data) {
             var value = Array.isArray(this.data[attr]) ? this.data[attr].join(' ') : this.data[attr];
-            res.write(' data-' + attr + '="' + escape_html(value) + '"');
+            res.write(' data-' + attr + '="' + escape(value) + '"');
         }
+
         return this;
     }
 });
 
 
-
-var InputWidget = exports.InputWidget = Widget.extend({
+exports.InputWidget = Widget.extend({
     init: function (type, options) {
         options.attrs.type = options.attrs.type || type;
         this._super(options);
     },
     render: function (res) {
-        res.write('<input value="' + escape_html(this.value != null ? this.value : '') + '"');
+        res.write('<input value="' + escape(this.value != null ? this.value : '') + '"');
         this.render_attributes(res);
         res.write(' />');
         return this;
     }
 });
 
-var HiddenWidget = exports.HiddenWidget = InputWidget.extend({
+
+exports.HiddenWidget = exports.InputWidget.extend({
     init: function (options) {
         this._super('hidden', options);
     }
 });
 
-var TextWidget = exports.TextWidget = InputWidget.extend({
+
+exports.TextWidget = exports.InputWidget.extend({
     init: function (options) {
         this._super('text', options);
     }
 });
 
-var PasswordWidget = exports.PasswordWidget = InputWidget.extend({
+
+exports.PasswordWidget = exports.InputWidget.extend({
     init: function (options) {
         this._super('password', options);
     }
 });
 
-var TextAreaWidget = exports.TextAreaWidget = Widget.extend({
+
+exports.TextAreaWidget = Widget.extend({
     render: function (res) {
         res.write('<textarea ');
         this.render_attributes(res);
         res.write(' >');
-        res.write(escape_html(this.value != null ? this.value : ''));
+        res.write(escape(this.value != null ? this.value : ''));
         res.write('</textarea>');
         return this;
     }
 });
 
-var RichTextAreaWidget = exports.RichTextAreaWidget = TextAreaWidget.extend({
+
+exports.RichTextAreaWidget = exports.TextAreaWidget.extend({
     init: function (options) {
         this._super(options);
         this.attrs.class.push('ckeditor');
@@ -111,12 +118,13 @@ var RichTextAreaWidget = exports.RichTextAreaWidget = TextAreaWidget.extend({
     }
 });
 
-var DateWidget = exports.DateWidget = InputWidget.extend({
+
+exports.DateWidget = exports.InputWidget.extend({
     init: function (options) {
-        this._super('datetime', options);
+        this._super('text', options);
         this.attrs.class.push('nf_datepicker');
-        this.static.js.push('/node-forms/datepicker/bootstrap-datepicker.js');
-        this.static.css.push('/node-forms/datepicker/datepicker.css');
+        this.static.js.push('/node-forms/js/bootstrap-datepicker.js');
+        this.static.css.push('/node-forms/css/datepicker.css');
     },
     render: function (res) {
         res.write('<div class="input-append date">');
@@ -126,7 +134,24 @@ var DateWidget = exports.DateWidget = InputWidget.extend({
     }
 });
 
-var NumberWidget = exports.NumberWidget = InputWidget.extend({
+
+exports.TimeWidget = exports.InputWidget.extend({
+    init: function (options) {
+        this._super('time', options);
+        this.attrs.class.push('nf_timepicker');
+        this.static.js.push('/node-forms/js/bootstrap-timepicker.js');
+        this.static.css.push('/node-forms/css/bootstrap-datepicker.js');
+    },
+    render: function (res) {
+        res.write('<div class="input-append bootstrap-timepicker-component">');
+        this._super(res);
+        res.write('<span class="add-on"><i class="icon-time"></i></span>');
+        res.write('</div>');
+    }
+});
+
+
+exports.NumberWidget = exports.InputWidget.extend({
     init: function (options) {
         options = options || {};
         options.attrs = options.attrs || {};
@@ -139,7 +164,8 @@ var NumberWidget = exports.NumberWidget = InputWidget.extend({
     }
 });
 
-var CheckboxWidget = exports.CheckboxWidget = InputWidget.extend({
+
+exports.CheckboxWidget = exports.InputWidget.extend({
     init: function (options) {
         this._super('checkbox', options);
     },
@@ -155,7 +181,8 @@ var CheckboxWidget = exports.CheckboxWidget = InputWidget.extend({
     }
 });
 
-var ChoicesWidget = exports.ChoicesWidget = Widget.extend({
+
+exports.ChoicesWidget = Widget.extend({
     init: function (options) {
         this.choices = options.choices || [];
         this._super(options);
@@ -205,7 +232,8 @@ var ChoicesWidget = exports.ChoicesWidget = Widget.extend({
     }
 });
 
-var RefWidget = exports.RefWidget = ChoicesWidget.extend({
+
+exports.RefWidget = exports.ChoicesWidget.extend({
     init: function (options) {
         this.ref = options.ref;
         if (!this.ref)
@@ -232,9 +260,11 @@ var RefWidget = exports.RefWidget = ChoicesWidget.extend({
     }
 });
 
+
 //var UnknownRefWidget = exports.UnknownRefWidget = _extends(ChoicesWidget)
 
-var ListWidget = exports.ListWidget = Widget.extend({
+
+exports.ListWidget = Widget.extend({
     init: function (options) {
         this._super(options);
     },
@@ -252,7 +282,8 @@ var ListWidget = exports.ListWidget = Widget.extend({
     }
 });
 
-var FileWidget = exports.FileWidget = InputWidget.extend({
+
+exports.FileWidget = exports.InputWidget.extend({
     init: function (options) {
         this._super('file', options);
     },
@@ -263,7 +294,8 @@ var FileWidget = exports.FileWidget = InputWidget.extend({
     }
 });
 
-var PictureWidget = exports.PictureWidget = InputWidget.extend({
+
+exports.PictureWidget = exports.InputWidget.extend({
     init: function (options) {
         this._super('file', options);
     },
@@ -274,7 +306,8 @@ var PictureWidget = exports.PictureWidget = InputWidget.extend({
     }
 });
 
-var MapWidget = exports.MapWidget = InputWidget.extend({
+
+exports.MapWidget = exports.InputWidget.extend({
     init: function (options) {
         this._super('hidden', options);
         this.attrs.class.push('nf_mapview');
@@ -300,7 +333,7 @@ var MapWidget = exports.MapWidget = InputWidget.extend({
 });
 
 
-var ComboBoxWidget = exports.ComboBoxWidget = ChoicesWidget.extend({
+exports.ComboBoxWidget = exports.ChoicesWidget.extend({
     init: function (options) {
         this._super(options);
         this.static.js.push('/node-forms/select2/select2.js');
@@ -311,7 +344,7 @@ var ComboBoxWidget = exports.ComboBoxWidget = ChoicesWidget.extend({
 });
 
 
-var AutocompleteWidget = exports.AutocompleteWidget = TextWidget.extend({
+exports.AutocompleteWidget = exports.TextWidget.extend({
     init: function (options) {
         options = options || {};
         this._super(options);
@@ -379,9 +412,3 @@ var AutocompleteWidget = exports.AutocompleteWidget = TextWidget.extend({
 
 
 });
-
-    
-    
-    
-    
-    

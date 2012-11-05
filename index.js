@@ -1,3 +1,7 @@
+/*
+    Formage
+    based on forms
+ */
 
 module.exports.forms = require('./forms');
 
