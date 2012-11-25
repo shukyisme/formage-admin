@@ -1,5 +1,5 @@
 {
-  "name": "Formage",
+  "name": "formage",
   "description": "Forms creation from fields or from mongoose models",
   "version": "0.0.2",
   "author": {
