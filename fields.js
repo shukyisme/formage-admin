@@ -65,8 +65,8 @@ var BaseField = exports.BaseField = Class.extend({
     render_with_label: function (res) {
         res.write('<div class="field">');
         res.write('<label for="id_' + this.name + '" class="field_label">' + this.get_label() + '</label>');
-        this.render_error(res);
         this.render(res);
+        this.render_error(res);
         res.write('</div>');
     },
     render_with_label_str: function () {
