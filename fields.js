@@ -293,6 +293,7 @@ var ListField = exports.ListField = BaseField.extend({
         return schema;
     },
     clean_value: function (req, callback) {
+        // casting and validation
         var self = this;
         var base = self._super;
         var prefix = self.name + '_li';
@@ -301,12 +302,14 @@ var ListField = exports.ListField = BaseField.extend({
         var clean_funcs = [];
         var inner_body = {};
         var inner_files = {};
+        self.children_errors = [];
 
-        function create_clean_func (field_name, post_data, file_data, output_data, old_value)//num,name,value)
+        function create_clean_func (field_name, post_data, file_data, output_data, old_value,parent_errors)//num,name,value)
         {
             return function (cbk) {
                 var field = self.fields[field_name];
                 field = _.clone(field);
+                field.errors = [];
                 field.name = field_name;
                 var old_body = req.body;
                 var request_copy = {};
@@ -317,8 +320,10 @@ var ListField = exports.ListField = BaseField.extend({
                 var old_field_value = (typeof(post_data[field_name]) == 'undefined' || post_data[field_name] == null) ? (old_value.get ? old_value.get(field_name) : old_value[field_name] ) : post_data[field_name];
                 field.set(old_field_value, request_copy);
                 field.clean_value(request_copy, function (err) {
-                    if (field.errors && field.errors.length)
+                    if (field.errors && field.errors.length) {
                         self.errors = _.union(self.errors, field.errors);
+                        parent_errors[field_name] = _.clone(field.errors);
+                    }
                     else
                         output_data[field_name] = field.value;
                     cbk(null);
@@ -357,9 +362,11 @@ var ListField = exports.ListField = BaseField.extend({
 
         field_names.forEach(function (key) {
             var output_data = {};
+            var output_errors = {};
             self.value.push(output_data);
+            self.children_errors.push(output_errors);
             for (var field_name in self.fields) {
-                clean_funcs.push(create_clean_func(field_name, inner_body[key] || {}, inner_files[key] || {}, output_data, old_list_value[key] || {}));
+                clean_funcs.push(create_clean_func(field_name, inner_body[key] || {}, inner_files[key] || {}, output_data, old_list_value[key] || {},output_errors));
             }
         });
         async.parallel(clean_funcs, function (err) {
@@ -405,14 +412,15 @@ var ListField = exports.ListField = BaseField.extend({
     render: function (res) {
         var self = this;
 
+        var children_errors = self.children_errors || [];
+
         function render_template (res) {
             var prefix = self.name + '_tmpl_';
             self.render_list_item(res, self.fields, self.fieldsets, prefix);
         }
-
         function render_item (res, i) {
             var prefix = self.name + '_li' + i + '_';
-            self.render_list_item(res, self.fields, self.fieldsets, prefix, self.value[i]);
+            self.render_list_item(res, self.fields, self.fieldsets, prefix, self.value[i],children_errors[i]);
         }
 
         this.widget.name = this.name;
@@ -444,9 +452,10 @@ var ListField = exports.ListField = BaseField.extend({
             return null;
         return parent[_.last(parts)];
     },
-    render_list_item: function (res, fields, fieldsets, prefix, value) {
+    render_list_item: function (res, fields, fieldsets, prefix, value,errors) {
         var self = this;
         var options = {};
+        errors = errors || {};
 
         function render_fields (fields) {
             for (var i = 0; i < fields.length; i++) {
@@ -461,6 +470,7 @@ var ListField = exports.ListField = BaseField.extend({
             if (!fields[field_name])
                 return;
             fields[field_name].name = prefix + field_name;
+            fields[field_name].errors = errors[field_name] || [];
             if (field_name != '__self__') {
                 fields[field_name].set(value ? self.deep_read(value, field_name) : null);
                 fields[field_name].render_with_label(res);
