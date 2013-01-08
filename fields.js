@@ -4,14 +4,11 @@ var widgets = require('./widgets'),
     _ = require('underscore'),
     common = require('./common');
 
-var mongoose = null;
-try
-{
-    mongoose = require('mongoose');
-}
-catch(e)
-{
-    console.log('couldnt get mongoose');
+try {
+    var ObjectId = require('mongoose').Schema.ObjectId
+} catch(e) {
+    console.warn('could not get mongoose\n mocking ObjectId');
+    var ObjectId = function() {};
 }
 
 var BaseField = exports.BaseField = Class.extend({
@@ -254,8 +251,8 @@ var RefField = exports.RefField = EnumField.extend({
     to_schema : function()
     {
         var schema = RefField.super_.prototype.to_schema.call(this);
-        schema['type'] = require('mongoose').Schema.ObjectId;
-        schema['ref'] = this.ref + '';
+        schema['type'] = ObjectId;
+        schema['ref'] = String(this.ref);
         return schema;
     }
 });

@@ -1,47 +1,35 @@
 {
-  "name": "j-forms",
-  "description": "jewish forms creation from fields or from mongoose models",
-  "version": "0.0.74",
-  "author": {
-    "name": "Ishai Jaffe",
-    "email": "ishai@empeeric.com"
-  },
-  "dependencies": {
-    "sji": "",
-    "underscore": "",
-    "mongoose": "",
-    "async": ""
-
-  },
-  "devDependencies": {
-    "express": "",
-    "ejs": ""
-  },
-  "main": "index",
-  "keywords": [
-    "forms",
-    "mongoose",
-    "django"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:IshaiJaffe/nodejs-forms.git"
-  },
-  "engines": {
-    "node": ">= 0.4.1"
-  },
-  "_npmUser": {
-    "name": "ishai",
-    "email": "ishai@empeeric.com"
-  },
-  "_id": "j-forms@0.0.73",
-  "optionalDependencies": {},
-  "_engineSupported": true,
-  "_npmVersion": "1.1.24",
-  "_nodeVersion": "v0.6.19",
-  "_defaultsLoaded": true,
-  "dist": {
-    "shasum": "83b4a314166671dc0e23a4970fc0e34af78304f9"
-  },
-  "_from": "j-forms@>= 0.0.59"
+	"name": "formage",
+	"description": "jewish forms creation from fields or from mongoose models",
+	"version": "1.0.0",
+	"readme": "Interim",
+	"author": {
+		"name": "Ishai Jaffe",
+		"email": "ishai@empeeric.com"
+	},
+	"contributors": ["Itai Perets <itai@empeeric.com> (http://www.empeeric.com/)",
+	"Refael Ackermann <refael@empeeric.com> (http://www.empeeric.com/)",
+	"Alon Valadji <alon@empeeric.com> (http://www.empeeric.com/)"],
+	"dependencies": {
+		"sji": "",
+		"underscore": "",
+		"async": "",
+		"mongoose": ""
+	},
+	"devDependencies": {
+		"express": "",
+		"ejs": ""
+	},
+	"main": "index",
+	"keywords": ["forms",
+	"mongoose",
+	"django"],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Empeeric/nodejs-forms.git"
+	},
+	"engines": {
+		"node": "0.8.x",
+		"npm": "1.1.x"
+	}
 }
