@@ -105,6 +105,8 @@ var BaseForm = exports.BaseForm = Class.extend({
         this.static['css'] = this.static['css'] || [];
         this.static['inline-style'] = this.static['inline-style'] || [];
         this.static['inline-script'] = this.static['inline-script'] || [];
+        this.static['js'].push('/node-forms/js/jquery-1.8.2.min.js');
+        this.static['js'].push('/node-forms/js/forms.js');
         this.handle_empty = options.empty;
         this.handle_success = options.success;
         this.handle_error = options.error;
