@@ -1,7 +1,10 @@
 Formage
 =======
 
-<a href="http://www.jetbrains.com/webstorm/" style="display:block; background:#fff url(http://www.jetbrains.com/webstorm/documentation/webstorm_banners/webstorm1/webstorm468x60_white.gif) no-repeat 10px 50%; border:solid 1px #0281b6; margin:0;padding:0;text-decoration:none;text-indent:0;letter-spacing:-0.001em; width:466px; height:58px" alt="Smart IDE for web development with HTML Editor, CSS &amp; JavaScript support" title="Smart IDE for web development with HTML Editor, CSS &amp; JavaScript support"><span style="margin: 5px 0 0 63px;padding: 0;float: left;font-size: 12px;cursor:pointer;  background-image:none;border:0;color: #0281b6; font-family: trebuchet ms,arial,sans-serif;font-weight: normal;text-align:left;">Hooked on</span><span style="margin:0 0 0 195px;padding:18px 0 2px 0; line-height:13px;font-size:13px;cursor:pointer;  background-image:none;border:0;display:block; width:265px; color:#0281b6; font-family: trebuchet ms,arial,sans-serif;font-weight: normal;text-align:left;">Smart IDE for web development<br/>with HTML Editor, CSS &amp; JavaScript support</span></a>
-
 Form mage, forked from [forms](https://github.com/caolan/forms),
 used mainly by [formage-admin](https://github.com/etaypere/formage-admin).
+
+<hr />
+<a id="stormlogo" href="http://www.jetbrains.com/webstorm/" alt="Smart IDE for web development with HTML Editor, CSS &amp; JavaScript support" title="Smart IDE for web development with HTML Editor, CSS &amp; JavaScript support">
+  ![](http://i.imgur.com/ynQ6c.png)
+</a>
