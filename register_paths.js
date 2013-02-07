@@ -1,18 +1,20 @@
+'use strict';
+if (!module.parent) console.error('Please don\'t call me directly.I am just the main app\'s minion.') || process.process.exit(1);
+
 var routesJson = require('./routes/json.js')
 	, routes = require('./routes/index.js');
 
 
 var path_join = function() {
     var str = '';
-    for(var i=0; i<arguments.length; i++)
-    {
-        var comp = arguments[i].replace(/^\//,'').replace(/\/$/,'');
-        if(comp == '')
+    for (var i = 0; i < arguments.length; i++) {
+        var comp = arguments[i].replace(/^\//, '').replace(/\/$/, '');
+        if (comp === '')
             continue;
         str += '/' + comp;
     }
     return str;
-}
+};
 
 exports.registerPaths = function(admin,app, root) {
 
@@ -40,4 +42,4 @@ exports.registerPaths = function(admin,app, root) {
     app.put(path_join(root, '/json/model/:collectionName/document'), routesJson.updateDocument);
     app.delete(path_join(root,  '/json/model/:collectionName/document'), routesJson.deleteDocument);
     app.get(path_join(root, '/json/model/:collectionName/linkedDocumentsList'), routesJson.linkedDocumentsList);
-}
+};
