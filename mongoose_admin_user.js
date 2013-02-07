@@ -1,25 +1,30 @@
-var mongoose = require('mongoose');
+'use strict';
+if (!module.parent) console.error('Please don\'t call me directly.I am just the main app\'s minion.') || process.process.exit(1);
 
-bcrypt = require('./crypt');
-
+var bcrypt = require('./crypt');
 exports.bcrypt = bcrypt;
 
-var AdminUserData = new mongoose.Schema({
-    username:{type:String, required:true, unique:true},
-    passwordHash:{type:String, editable:false},
-    is_superuser :{type:Boolean,'default':false},
-    permissions:[{type:mongoose.Schema.ObjectId, ref:'_MongooseAdminPermission'}]
-},{strict:true});
-mongoose.model('_MongooseAdminUser', AdminUserData);
+var AdminUserData = new module.parent.mongoose_module.Schema({
+    username: {type: String, required: true, unique: true},
+    passwordHash: {type: String, editable: false},
+    is_superuser: {type: Boolean, 'default': false},
+    permissions: [
+        {type: module.parent.mongoose_module.Schema.ObjectId, ref: '_MongooseAdminPermission'}
+    ]
+}, {strict: true});
+
+module.parent.mongoose_module.model('_MongooseAdminUser', AdminUserData);
 
 function MongooseAdminUser() {
     this.fields = {};
+}
 
-};
 
-MongooseAdminUser.prototype.toSessionStore = function() {
+MongooseAdminUser.prototype.toSessionStore = function () {
     var serialized = {};
     for (var i in this) {
+        if (!this.hasOwnProperty(i))
+            continue;
         if (typeof i !== 'function' || typeof i !== 'object') {
             serialized[i] = this[i];
         }
@@ -28,7 +33,7 @@ MongooseAdminUser.prototype.toSessionStore = function() {
     return JSON.stringify(serialized);
 };
 
-MongooseAdminUser.fromSessionStore = function(sessionStore) {
+MongooseAdminUser.fromSessionStore = function (sessionStore) {
     var sessionObject = JSON.parse(sessionStore);
     var adminUser = new MongooseAdminUser();
     for (var i in sessionObject) {
@@ -40,26 +45,24 @@ MongooseAdminUser.fromSessionStore = function(sessionStore) {
     return adminUser;
 };
 
-MongooseAdminUser.ensureExists = function(username, password, onReady) {
+MongooseAdminUser.ensureExists = function (username, password, onReady) {
     var adminUser = new MongooseAdminUser();
-    var adminUserModel = mongoose.model('_MongooseAdminUser');
+    var AdminUserModel = module.parent.mongoose_module.model('_MongooseAdminUser');
 
-    adminUserModel.findOne({'username': username}, function(err, adminUserData) {
+    AdminUserModel.findOne({'username': username}, function (err, adminUserData) {
         if (err) {
             console.log('Unable to check if admin user exists because: ' + err);
-            oReady('Unable to check if user exist', null);
         } else {
+            var salt = bcrypt.gen_salt_sync(10);
             if (adminUserData) {
-                var salt = bcrypt.gen_salt_sync(10);
                 adminUserData.passwordHash = bcrypt.encrypt_sync(password, salt);
             } else {
-                adminUserData = new adminUserModel();
+                adminUserData = new AdminUserModel();
                 adminUserData.username = username;
-                var salt = bcrypt.gen_salt_sync(10);
                 adminUserData.passwordHash = bcrypt.encrypt_sync(password, salt);
             }
             adminUserData.is_superuser = true;
-            adminUserData.save(function(err) {
+            adminUserData.save(function (err) {
                 if (err) {
                     console.log('Unable to create or update admin user because: ' + err);
                     onReady('Unable to create or update admin user', null);
@@ -72,11 +75,11 @@ MongooseAdminUser.ensureExists = function(username, password, onReady) {
     });
 };
 
-MongooseAdminUser.getByUsernamePassword = function(username, password, onReady) {
+MongooseAdminUser.getByUsernamePassword = function (username, password, onReady) {
     var adminUser = new MongooseAdminUser();
-    var adminUserModel = mongoose.model('_MongooseAdminUser');
+    var adminUserModel = module.parent.mongoose_module.model('_MongooseAdminUser');
 
-    adminUserModel.findOne({'username': username}, function(err, adminUserData) {
+    adminUserModel.findOne({'username': username}, function (err, adminUserData) {
         if (err) {
             console.log('Unable to get admin user because: ' + err);
             onReady('Unable to get admin user', null);
