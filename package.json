@@ -1,34 +1,47 @@
 {
-  "name": "formage",
-  "description": "Forms creation from fields or from mongoose models",
-  "version": "0.0.3",
-  "author": {
-    "name": "Ishai Jaffe",
-    "email": "ishai@empeeric.com"
-  },
-  "dependencies": {
-    "sji": "",
-    "underscore": "",
-    "mongoose": "",
-    "async": "",
-    "cloudinary": ""
-  },
-  "devDependencies": {
-    "express": "",
-    "ejs": ""
-  },
-  "main": "index",
-  "keywords": [
-    "formage",
-    "forms",
-    "mongoose",
-    "django"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:etaypere/formage.git"
-  },
-  "engines": {
-    "node": ">= 0.4.1"
-  }
+    "name": "formage",
+    "description": "Forms creation from fields or from mongoose models",
+    "version": "1.0.1",
+    "author": {
+        "name": "Ishai Jaffe",
+        "email": "ishai@empeeric.com"
+    },
+    "contributors": [
+        {
+            "name": "Itai Perets",
+            "email": "itai@empeeric.com",
+            "url": "http://www.empeeric.com/"
+        },
+        {
+            "name": "Refael Ackermann",
+            "email": "refael@empeeric.com",
+            "url": "http://www.empeeric.com/"
+        },
+        {
+            "name": "Alon Valadji",
+            "email": "alon@empeeric.com",
+            "url": "http://www.empeeric.com/"
+        }
+    ],
+    "dependencies": {
+        "sji": "",
+        "underscore": "",
+        "async": "",
+        "cloudinary": ""
+    },
+    "main": "index",
+    "keywords": [
+        "formage",
+        "forms",
+        "mongoose",
+        "django"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git@github.com:Empeeric/formage.git"
+    },
+    "engines": {
+        "node": "> 0.8.0",
+        "npm": "> 1.1.0"
+    }
 }

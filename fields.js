@@ -1,13 +1,33 @@
-var widgets = require('./widgets'),
-    async = require('async'),
-    Class = require('sji'),
-    _ = require('underscore'),
-    common = require('./common');
+'use strict';
+if (!module.parent) { console.log('Please don\'t call me directly. I am just the main app\'s minion.'); process.exit(1); }
+
+var widgets = require('./widgets');
+var async = require('async');
+var Class = require('sji');
+var _ = require('underscore');
+var common = require('./common');
+var path = require('path');
+var fs = require('fs');
+var util = require('util');
+try {
+    var knox = require('knox');
+}
+catch (e) {
+    util.puts('no knox');
+}
 
 
-var mongoose = null;
-try         { mongoose = require('mongoose'); }
-catch (e)   { console.error('Could not get mongoose.'); }
+exports.setAmazonCredentials = function (credentials) {
+    if (knox)
+        module.knox_client = knox.createClient(credentials);
+};
+
+exports.getKnoxClient = function () {
+    return module.knox_client;
+};
+
+var global_counter = 0;
+
 
 
 var BaseField = exports.BaseField = Class.extend({
@@ -81,18 +101,18 @@ var BaseField = exports.BaseField = Class.extend({
             }
         }
     },
-    set: function (value, req) {
-        this.value = (typeof(value) == 'undefined' || value == null) ? this['default'] : value;
+    set: function (value) {
+        this.value = (typeof(value) === 'undefined' || value == null) ? this['default'] : value;
         return this;
     },
     clean_value: function (req, callback) {
-        if (this.value === '')
+        if (String(this.value) === '')
             this.value = null;
         if ((this.value === null || this.value === []) && this.required)
             this.errors.push('this field is required');
         for (var i = 0; i < this.validators.length; i++) {
             var result = this.validators[i](this.value);
-            if (result != true) {
+            if (result !== true) {
                 this.errors.push(result);
             }
         }
@@ -131,13 +151,9 @@ var ReadonlyField = exports.ReadonlyField = BaseField.extend({
         options.widget = options.widget || widgets.HiddenWidget;
         this._super(options);
     },
-    render_label: function (res) {
-
-    },
+    render_label: function () {},
     render_with_label: function (res) {
-        //    res.write('<label><span>');
         this.render(res);
-        //    res.write('</span></label>');
     }
 });
 
@@ -154,10 +170,7 @@ var BooleanField = exports.BooleanField = BaseField.extend({
         return schema;
     },
     clean_value: function (req, callback) {
-        if (req.body[this.name] && req.body[this.name] != '')
-            this.value = true;
-        else
-            this.value = false;
+        this.value = req.body[this.name] && req.body[this.name] !== '';
         this._super(req, callback);
         return this;
     }
@@ -192,7 +205,7 @@ var EnumMultiField = exports.EnumMultiField = EnumField.extend({
     init: function (options, choices) {
         options = options || {};
         options.attrs = options.attrs || {};
-        options.attrs.multiple = typeof(options.attrs.multiple) != 'undefined' ? options.attrs.multiple : 'multiple';
+        options.attrs.multiple = typeof(options.attrs.multiple) !== 'undefined' ? options.attrs.multiple : 'multiple';
         this._super(options, choices);
     },
     clean_value: function (req, callback) {
@@ -223,7 +236,7 @@ var RefField = exports.RefField = EnumField.extend({
     },
     to_schema: function () {
         var schema = RefField.super_.prototype.to_schema.call(this);
-        schema['type'] = mongoose.Schema.ObjectId;
+        schema['type'] = module.parent.mongoose_module.Schema.ObjectId;
         schema['ref'] = this.ref + '';
         return schema;
     }
@@ -270,6 +283,7 @@ var DateField = exports.DateField = BaseField.extend({
         options.widget = options.widget || widgets.DateWidget;
         this._super(options);
     },
+
     to_schema: function () {
         var schema = this._super();
         schema['type'] = Date;
@@ -278,7 +292,7 @@ var DateField = exports.DateField = BaseField.extend({
 });
 
 
-var ListField = exports.ListField = BaseField.extend({
+var ListField_ = exports.ListField = BaseField.extend({
     init: function (options, fields, fieldsets) {
         options = options || {};
         options['default'] = options['default'] || [];
@@ -304,57 +318,53 @@ var ListField = exports.ListField = BaseField.extend({
         var inner_files = {};
         self.children_errors = [];
 
-        function create_clean_func (field_name, post_data, file_data, output_data, old_value,parent_errors)//num,name,value)
-        {
+        function create_clean_func(field_name, post_data, file_data, output_data, old_value, parent_errors) {
             return function (cbk) {
                 var field = self.fields[field_name];
                 field = _.clone(field);
                 field.errors = [];
                 field.name = field_name;
-                var old_body = req.body;
-                var request_copy = {};
-                for (var key in req)
-                    request_copy[key] = req[key];
-                request_copy.body = post_data;
-                request_copy.files = file_data;
-                var old_field_value = (typeof(post_data[field_name]) == 'undefined' || post_data[field_name] == null) ? (old_value.get ? old_value.get(field_name) : old_value[field_name] ) : post_data[field_name];
+                var request_copy = _.extend({body: post_data, files: file_data}, req);
+                var old_field_value = (field_name in post_data) ? post_data[field_name] : (old_value.get ? old_value.get(field_name) : old_value[field_name] );
                 field.set(old_field_value, request_copy);
                 field.clean_value(request_copy, function (err) {
+                    if (err) console.trace(err);
                     if (field.errors && field.errors.length) {
                         self.errors = _.union(self.errors, field.errors);
                         parent_errors[field_name] = _.clone(field.errors);
-                    }
-                    else
+                    } else {
                         output_data[field_name] = field.value;
+                    }
                     cbk(null);
                 });
             }
         }
 
-        for (var field_name in req.body) {
-            if (field_name.indexOf(prefix, 0) > -1) {
-                var suffix = field_name.split(prefix)[1];
-                var next_ = suffix.indexOf('_');
-                var num = suffix.substring(0, next_);
-                var name = suffix.substring(next_ + 1);
-                var data = inner_body[num] || {};
-                inner_body[num] = data;
-                data[name] = req.body[field_name];
-                //clean_funcs.push(create_clean_func(num,name,req.body[field_name]));
-            }
-        }
-        for (var field_name in req.files) {
-            if (field_name.indexOf(prefix, 0) > -1) {
-                var suffix = field_name.split(prefix)[1];
-                var next_ = suffix.indexOf('_');
-                var num = suffix.substring(0, next_);
-                var name = suffix.substring(next_ + 1);
-                var data = inner_files[num] || {};
-                inner_files[num] = data;
-                data[name] = req.files[field_name];
-                //clean_funcs.push(create_clean_func(num,name,req.body[field_name]));
-            }
-        }
+        req.body.forEach(function (field_name2) {
+            if (!~field_name2.indexOf(prefix)) return;
+            var suffix = field_name2.split(prefix)[1];
+            var next_ = suffix.indexOf('_');
+            var num = suffix.substring(0, next_);
+            var name = suffix.substring(next_ + 1);
+            var data = inner_body[num] || {};
+            inner_body[num] = data;
+            data[name] = req.body[field_name2];
+            //clean_funcs.push(create_clean_func(num,name,req.body[field_name2]));
+        });
+
+        req.files.forEach(function (field_name3) {
+            if (!~field_name3.indexOf(prefix)) return;
+            var suffix = field_name3.split(prefix)[1];
+            var next_ = suffix.indexOf('_');
+            var num = suffix.substring(0, next_);
+            var name = suffix.substring(next_ + 1);
+            var data = inner_files[num] || {};
+            inner_files[num] = data;
+            data[name] = req.files[field_name3];
+            //clean_funcs.push(create_clean_func(num,name,req.body[field_name3]));
+        });
+
+        //noinspection JSUnresolvedFunction
         var field_names = _.chain(Object.keys(inner_body))
             .union(Object.keys(inner_files))
             .unique()
@@ -365,15 +375,22 @@ var ListField = exports.ListField = BaseField.extend({
             var output_errors = {};
             self.value.push(output_data);
             self.children_errors.push(output_errors);
-            for (var field_name in self.fields) {
-                clean_funcs.push(create_clean_func(field_name, inner_body[key] || {}, inner_files[key] || {}, output_data, old_list_value[key] || {},output_errors));
-            }
+            Object.keys(self.fields).forEach(function (field_name) {
+                clean_funcs.push(create_clean_func(
+                    field_name,
+                    inner_body[key] || {},
+                    inner_files[key] || {},
+                    output_data,
+                    old_list_value[key] || {},
+                    output_errors
+                ));
+            });
         });
         async.parallel(clean_funcs, function (err) {
+            if (err) console.trace(err);
             for (var i = 0; i < self.value.length; i++) {
                 var new_dict = {};
-                for (var key in self.value[i])
-                    self.deep_write(new_dict, key, self.value[i][key]);
+                self.value[i].forEach(function (key) { self.deep_write(new_dict, key, self.value[i][key]); });
                 self.value[i] = new_dict;
                 if ('__self__' in self.value[i])
                     self.value[i] = self.value[i].__self__;
@@ -389,7 +406,7 @@ var ListField = exports.ListField = BaseField.extend({
         self.widget.name = self.name;
         self.widget.value = self.value;
 
-        function pre_render_partial (field) {
+        function pre_render_partial(field) {
             return function (cbk) {
                 self.fields[field].set(_.map(self.value || [], function (obj) {
                     return (obj && obj[field]) || '';
@@ -400,13 +417,9 @@ var ListField = exports.ListField = BaseField.extend({
             };
         }
 
-        for (var field in self.fields) {
-            funcs.push(pre_render_partial(field));
-        }
+        Object.keys(self.fields).forEach(function (field) { funcs.push(pre_render_partial(field)); });
         funcs.push(self.widget.pre_render);
-        async.parallel(funcs, function (err, results) {
-            callback(err);
-        });
+        async.parallel(funcs, callback);
         return self;
     },
     render: function (res) {
@@ -414,13 +427,14 @@ var ListField = exports.ListField = BaseField.extend({
 
         var children_errors = self.children_errors || [];
 
-        function render_template (res) {
+        function render_template(res) {
             var prefix = self.name + '_tmpl_';
             self.render_list_item(res, self.fields, self.fieldsets, prefix);
         }
-        function render_item (res, i) {
+
+        function render_item(res, i) {
             var prefix = self.name + '_li' + i + '_';
-            self.render_list_item(res, self.fields, self.fieldsets, prefix, self.value[i],children_errors[i]);
+            self.render_list_item(res, self.fields, self.fieldsets, prefix, self.value[i], children_errors[i]);
         }
 
         this.widget.name = this.name;
@@ -452,26 +466,26 @@ var ListField = exports.ListField = BaseField.extend({
             return null;
         return parent[_.last(parts)];
     },
-    render_list_item: function (res, fields, fieldsets, prefix, value,errors) {
+    render_list_item: function (res, fields, fieldsets, prefix, value, errors) {
         var self = this;
-        var options = {};
         errors = errors || {};
 
-        function render_fields (fields) {
+        function render_fields(fields) {
             for (var i = 0; i < fields.length; i++) {
                 var field_name = fields[i];
-                if (typeof(field_name) == 'object')
+                if (typeof(field_name) === 'object')
                     render_fieldset(field_name);
                 else
                     render_field(field_name);
             }
-        };
-        function render_field (field_name) {
+        }
+
+        function render_field(field_name) {
             if (!fields[field_name])
                 return;
             fields[field_name].name = prefix + field_name;
             fields[field_name].errors = errors[field_name] || [];
-            if (field_name != '__self__') {
+            if (field_name !== '__self__') {
                 fields[field_name].set(value ? self.deep_read(value, field_name) : null);
                 fields[field_name].render_with_label(res);
             }
@@ -479,20 +493,21 @@ var ListField = exports.ListField = BaseField.extend({
                 fields[field_name].set(value);
                 fields[field_name].render(res);
             }
-        };
+        }
 
-        function render_fieldset (fieldset) {
-            if (fieldset['title'] && fieldset['title'] != '')
+        function render_fieldset(fieldset) {
+            if (fieldset['title'] && fieldset['title'] !== '')
                 res.write('<div class="nf_fieldset">');
             var title = fieldset['title'] || '';
-            if (title != '')
+            if (title !== '')
                 res.write('<h2>' + title + '</h2>');
             var fields = fieldset.fields;
             if (fields)
                 render_fields(fields);
-            if (fieldset['title'] && fieldset['title'] != '')
+            if (fieldset['title'] && fieldset['title'] !== '')
                 res.write("</div>");
-        };
+        }
+
         if (fieldsets) {
             render_fields(fieldsets[0].fields);
         }
@@ -503,33 +518,12 @@ var ListField = exports.ListField = BaseField.extend({
 });
 
 
-var fs = require('fs');
-var util = require('util');
-var knox;
-try {
-    knox = require('knox');
-}
-catch (e) {
-}
-
-var client;
-exports.setAmazonCredentials = function (credentials) {
-    if (knox)
-        client = knox.createClient(credentials);
-};
-
-exports.getKnoxClient = function () {
-    return client;
-};
-
-var global_counter = 0;
-
-
-var FileField = exports.FileField = BaseField.extend({
+var FileField_ = exports.FileField = BaseField.extend({
     init: function (options) {
         options = options || {};
         options.widget = options.widget || widgets.FileWidget;
-        this.directory = options.upload_to || require('path').join(__dirname, '..', '..', 'public', 'cdn');
+        //noinspection JSUnresolvedVariable
+        this.directory = options.upload_to || path.join(__dirname, '..', '..', 'public', 'cdn');
         this._super(options);
     },
     to_schema: function () {
@@ -540,80 +534,87 @@ var FileField = exports.FileField = BaseField.extend({
         };
     },
     create_filename: function (file) {
-        var parts = file.name.split('.');
-        var filename = parts.length > 1 ? parts.slice(0, parts.length - 1).join('.') : parts[0];
-        filename = filename.replace(/[\s\-()]/g, '_');
-        var ext = parts.length > 1 ? '.' + parts[parts.length - 1] : '';
-        ext = ext.replace(/[\s\-()]/g, '_');
-        return filename + '_' + ((Date.now() + global_counter++) % 1000) + ext;
+        var ext = path.extname(file);
+        var basename = path.basename(file, ext);
+        var unique = (Date.now() + global_counter++) % 1000;
+        var filename = util.format('%s_%d.%s', basename, unique, ext);
+        return filename;
     },
     clean_value: function (req, callback) {
         var self = this;
         var base = self._super;
         self.value = self.value || {};
-        function on_finish () {
+        function on_finish() {
             base.call(self, req, callback);
         }
 
-        function after_delete (err) {
-            if (req.files && req.files[self.name] && req.files[self.name].name) {
-                // copy file from temp location
-
-                if (knox && client) {
-                    var stream = fs.createReadStream(req.files[self.name].path);
-                    var filename = self.create_filename(req.files[self.name]);
-
-                    client.putStream(stream, '/' + filename, {'Content-Length': req.files[self.name].size}, function (err, res) {
-                        if (err) {
-                            if (err.socket && err.socket._httpMessage)
-                                res = err;
-                            else {
-                                console.error('upload to amazon failed', err);
-                                console.trace();
-                                callback(err);
-                                return;
-                            }
+        function handle_upload(err) {
+            if (err) console.trace(err);
+            if (!req.files || !req.files[self.name] || !req.files[self.name].name) {
+                on_finish();
+                return;
+            }
+            var uploaded_file = req.files[self.name];
+            // copy file from temp location
+            if (module.knox_client) {
+                var stream = fs.createReadStream(uploaded_file.path);
+                var filename_to_upload = '/' + self.create_filename(uploaded_file.path);
+                module.knox_client.putStream(stream, filename_to_upload, {'Content-Length': uploaded_file.size}, function (err, res) {
+                    if (err) {
+                        //noinspection JSUnresolvedVariable
+                        if (err.socket && err.socket._httpMessage) {
+                            res = err;
+                        } else {
+                            console.error('upload to amazon failed', err.stack || err);
+                            callback(err);
+                            return;
                         }
+                    }
 
-                        fs.unlink(req.files[self.name].path);
-                        var fileparts = res.socket._httpMessage.url.split('/');
+                    fs.unlink(uploaded_file.path);
+                    //noinspection JSUnresolvedVariable
+                    var http_message = res.socket._httpMessage;
+                    var url = http_message.url.replace(/https:/, 'http:');
+                    self.value = {
+                        path: path.basename(uploaded_file.path),
+                        url: url,
+                        size: uploaded_file.size};
+                    on_finish();
+                });
+            } else {
+                var input_stream = fs.createReadStream(uploaded_file.path);
+                var filename = self.create_filename(uploaded_file);
+                var output_stream = fs.createWriteStream(path.join(self.directory, filename));
+                input_stream.pipe(output_stream);
+                output_stream.on("end", function (err) {
+                    if (err) console.trace(err);
+                    fs.unlink(uploaded_file.path, function (err) {
+                        if (err) console.trace(err);
                         self.value = {
-                            path: fileparts[fileparts.length - 1],
-                            url: res.socket._httpMessage.url.replace(/https:/, 'http:'),
-                            size: req.files[self.name].size};
+                            path: filename,
+                            url: '/cdn/' + filename,
+                            size: uploaded_file.size
+                        };
                         on_finish();
                     });
-                }
-                else {
-                    var is = fs.createReadStream(req.files[self.name].path);
-
-                    var filename = self.create_filename(req.files[self.name]);
-                    var os = fs.createWriteStream(self.directory + '/' + filename);
-
-                    util.pump(is, os, function (err) {
-                        fs.unlink(req.files[self.name].path, function (err) {
-                            self.value = {path: filename, url: '/cdn/' + filename, size: req.files[self.name].size};
-                            on_finish();
-                        });
-                    });
-                }
-
+                });
             }
-            else {
-                on_finish();
-            }
-        };
+        }
+
         // delete old file is needed/requested
         if (self.value && self.value.path && (req.body[self.name + '_clear'] || (req.files[self.name] && req.files[self.name].name))) {
-            fs.unlink(self.directory + self.value.path, after_delete);
+            fs.unlink(self.directory + self.value.path, handle_upload);
             self.value = null;
         }
         else {
-            after_delete();
+            handle_upload();
         }
 
     }
 });
+
+
+
 var PictureField = exports.PictureField = BaseField.extend({
     init: function (options) {
         options = options || {};
@@ -642,7 +643,6 @@ var PictureField = exports.PictureField = BaseField.extend({
     },
     clean_value: function (req, callback) {
         var self = this;
-        var base = self._super;
         self.value = self.value || {};
 
         if (self.value && self.value.url && req.body[self.name + '_clear']) {
@@ -670,7 +670,7 @@ var GeoField = exports.GeoField = BaseField.extend({
     clean_value: function (req, callback) {
         var str = this.value;
         var parts = str.split(',');
-        if (parts.length != 2 || parts[0] == '' || parts[1] == '')
+        if (parts.length !== 2 || parts[0] === '' || parts[1] === '')
             this.value = null;
         else {
             this.value = { geometry: { lat: Number(parts[0]), lng: Number(parts[1])}};
@@ -704,3 +704,6 @@ var DictField = exports.DictField = BaseField.extend({
         this._super(res);
     }
 });
+
+
+

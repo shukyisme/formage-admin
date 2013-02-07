@@ -301,8 +301,10 @@ exports.PictureWidget = exports.InputWidget.extend({
     },
     render: function (res) {
         this._super(res);
-        if (this.value && this.value.url)
-            res.write('Clear<input type="checkbox" name="' + this.name + '_clear" value="Clear" /> <a href="' + this.value.url + '">' + this.value.original_name + '</a>');
+        if (!(this.value && this.value.url)) return;
+        var template = 'Clear<input type="checkbox" name="%s_clear" value="Clear" /><a href' + '="%s">%s</a>';
+        var html = util.format(template, this.name, this.value.url, this.value.original_name);
+        res.write(html);
     }
 });
 
