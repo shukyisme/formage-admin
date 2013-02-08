@@ -1,13 +1,13 @@
 'use strict';
 if (!module.parent) console.error('Please don\'t call me directly.I am just the main app\'s minion.') || process.process.exit(1);
 
-var _ = require('underscore'),
-    async = require('async');
+var _ = require('underscore');
+var async = require('async');
 
 exports.crypt = require('./crypt');
-exports.forms = require('formage');
-
-var forms = exports.forms.forms;
+var formage = exports.formage = require('formage');
+exports.forms = formage;
+var forms = formage.forms;
 
 exports.version = '1.0.1';
 
@@ -23,11 +23,23 @@ function MongooseAdmin(app, root) {
     this.title = "Backoffice";
 }
 
+
+exports.statics_path = path.join(__dirname, 'public');
+exports.serve_static = function (app, express) {
+    if (module._serving_statics) return;
+    module._serving_statics = true;
+
+    formage.serve_static(app, express);
+    app.use('/', express.static(exports.statics_path));
+};
+
+
 /**
  * Create the admin singleton object
  *
- * @param {String} dbUri
- * @param {Number} port
+ * @param {Object} app
+ * @param {Object} options
+ * @param {Object} arg_mongoose
  *
  * @api public
  */
@@ -47,28 +59,23 @@ exports.createAdmin = function (app, options, arg_mongoose) {
         require('./register_paths').registerPaths(MongooseAdmin, app, '/' + root);
         MongooseAdmin.singleton = new MongooseAdmin(app, '/' + root);
     }
-
-    app.use(require('express').static(__dirname + '/public'));
-
     return MongooseAdmin.singleton;
 };
+
 
 /**
  * Build a full path that can be used in a URL
  *
  * @param {String} path
  */
-MongooseAdmin.prototype.buildPath = function (path) {
-    return this.root + path;
-};
+MongooseAdmin.prototype.buildPath = function (path) {return this.root + path;};
 
-MongooseAdmin.prototype.getAdminTitle = function () {
-    return this.title;
-};
 
-MongooseAdmin.prototype.setAdminTitle = function (title) {
-    this.title = title;
-};
+MongooseAdmin.prototype.getAdminTitle = function () {return this.title;};
+
+
+MongooseAdmin.prototype.setAdminTitle = function (title) {this.title = title;};
+
 
 /**
  * Push the mongoose-admin express config to the current config
@@ -89,45 +96,49 @@ MongooseAdmin.prototype.popExpressConfig = function (config) {
 };
 
 
-function buildModelFilters(model, filters, dict) {
-    if (!filters)
-        return;
-    setTimeout(function () {
-        async.forEach(filters, function (filter, cbk) {
+function async_build_model_filters(model, filters, dict) {
+    process.nextTick(function () {
+        filters.forEach(function (filter, cbk) {
+            var filter_options = model.schema.paths[filter].options || {};
+            var ref_name = filter_options && filter_options.ref;
             model.collection.distinct(filter, function (err, results) {
-                if (results) {
-                    if (results[0] && Array.isArray(results[0])) {
-                        results = _.flatten(results);
-                    }
-                    if (results.length > 30)
-                        results.splice(5);
-                    if (model.schema.paths[filter] && model.schema.paths[filter].options.ref) {
-                        module.mongoose_module.model(model.schema.paths[filter].options.ref).find()
-                            .where('_id').in(results).exec(function (err, refs) {
-                                if (refs)
-                                    dict.push({key: filter, isString: false, values: _.map(refs, function (ref) { return { value: ref.id, text: ref.toString()}; }) });
-                                cbk(err);
-                            })
-                    }
-                    else {
-                        dict.push({key: filter, values: _.map(results, function (result) {
-                            var path = model.schema.paths[filter];
+                if (!results) {
+                    return cbk(err);
+                }
+                if (results[0] && Array.isArray(results[0])) {
+                    results = _.flatten(results);
+                }
+                if (results.length > 30) {
+                    results.splice(5);
+                }
+                if (ref_name) {
+                    module.mongoose_module.model(ref_name).find()
+                        .where('_id').in(results).exec(function (err, refs) {
+                            if (refs) {
+                                dict.push({
+                                    key: filter,
+                                    isString: false,
+                                    values: refs.map(function (ref) {return {value: ref.id, text: ref.toString()};})
+                                });
+                            }
+                            cbk(err);
+                        })
+                } else {
+                    dict.push({
+                        key: filter,
+                        values: results.map(function (result) {
                             return {
                                 value: result,
                                 text: result,
-                                isString: path && path.options && path.options.type === String
+                                isString: filter_options.type === String
                             };
                         })});
-                        cbk();
-                    }
+                    cbk();
                 }
-                else
-                    cbk(err);
+                return null;
             })
-
-        }, function () {
         })
-    }, 1000);
+    });
 }
 
 
@@ -135,13 +146,15 @@ MongooseAdmin.prototype.registerMongooseModel = function (modelName, model, fiel
     options = options || {};
     options.actions = options.actions || [];
     options.actions.push({value: 'delete', label: 'Delete', func: function (user, ids, callback) {
+        //noinspection JSUnresolvedFunction
         async.parallel(_.map(ids, function (id) {
             return function (cbk) {
                 forms.checkDependecies(modelName, id, cbk);
             }
         }), function (err, results) {
-            if (err)
+            if (err) {
                 callback(err);
+            }
             else {
                 var no_dependecies = _.filter(ids, function (result, index) {
                     return results[index].length === 0;
@@ -151,7 +164,7 @@ MongooseAdmin.prototype.registerMongooseModel = function (modelName, model, fiel
         });
     }});
     var filters = [];
-    buildModelFilters(model, options.filters, filters);
+    async_build_model_filters(model, options.filters, filters);
 
     this.models[modelName] = {model: model,
         filters: filters,
@@ -174,101 +187,90 @@ MongooseAdmin.prototype.registerSingleRowModel = function (model, name, options)
 /**
  * Register a new mongoose model/schema with admin
  *
- * @param {String} modelName
- * @param {Object} fields
+ * @param {Object} model
+ * @param {String} name
  * @param {Object} options
  *
  * @api public
  */
 MongooseAdmin.prototype.registerModel = function (model, name, options) {
-    this.models[name] = {model: model,
-        modelName: name,
-        options: options
-    };
+    this.models[name] = {model: model, modelName: name, options: options};
     console.log('\x1b[36mMongooseAdmin registered model: \x1b[0m %s', name);
 
 };
 
+
 /**
  * Retrieve a list of all registered models
  *
- * @param {Function} onReady
+ * @param {Function} callback
  *
  * @api public
  */
-MongooseAdmin.prototype.getRegisteredModels = function (user, onReady) {
+MongooseAdmin.prototype.getRegisteredModels = function (user, callback) {
     var models = [];
-    for (var collectionName in this.models) {
-        this.models[collectionName].model.is_single = this.models[collectionName].is_single;
-        models.push(this.models[collectionName]);
-    }
-
-    models = _.filter(models, function (model) {
-        return module.permissions.hasPermissions(user, model.modelName, 'view');
+    Object.keys(this.models).forEach(function (model_name) {
+        var model_schema = this.models[model_name];
+        model_schema.model.is_single = model_schema.is_single;
+        if (module.permissions.hasPermissions(user, model.modelName, 'view')) {
+            models.push(model_schema);
+        }
     });
-    onReady(null, models);
+    callback(null, models);
 };
+
 
 /**
  * Get a single model from the registered list with admin
  *
- * @param {String} collectionName
- * @param {Function} onReady
+ * @param {String} model_name
+ * @param {Function} callback
  *
  * @api public
  */
-MongooseAdmin.prototype.getModel = function (collectionName, onReady) {
-    onReady(null, this.models[collectionName].model, this.models[collectionName].fields, this.models[collectionName].options);
+MongooseAdmin.prototype.getModel = function (model_name, callback) {
+    var model_schema = this.models[model_name];
+    callback(null, model_schema.model, model_schema.fields, model_schema.options);
 };
+
 
 /**
  * Get the counts of a model
  *
- * @param {String} collectionName
+ * @param {String} model_name
  *
  * @api public
  */
-MongooseAdmin.prototype.modelCounts = function (collectionName, filters, onReady) {
-    if (this.models[collectionName].is_single) {
-        onReady(null, 1);
+MongooseAdmin.prototype.modelCounts = function (model_name, filters, callback) {
+    var model_schema = self.models[model_name];
+    var model = model_schema.model;
+    if (model_schema.is_single) {
+        callback(null, 1);
         return;
     }
-    var model;
-    try {
-        model = module.mongoose_module.model(collectionName);
-    }
-    catch (e) {
-        model = this.models[collectionName].model;
-    }
-    _.each(filters, function (value, key) {
-        if (model.schema && typeof(value) === 'string') {
+    filters.filter(function (val) {return model.schema && typeof(val) === 'string'})
+        .forEach(function (value, key) {
             var type = model.schema.paths[key].options.type;
-            if (type === String)
+            if (type === String) {
                 filters[key] = new RegExp(value, 'i');
-            else if (type === Number)
+            } else if (type === Number) {
                 filters[key] = Number(value) || undefined;
-            else if (type === Boolean)
-                filters[key] = value === 'true' ? true : false;
-        }
-    });
-    this.models[collectionName].model.count(filters, function (err, count) {
-        if (err) {
-            console.error('Unable to get counts for model because: ' + err);
-            onReady(null, 0);
-        } else {
-            onReady(null, count);
-        }
-    });
+            } else if (type === Boolean) {
+                filters[key] = value === 'true';
+            }
+        });
+    model.count(filters, callback);
 };
 
 
 function mongooseSort(query, sort) {
     var IS_OLD_MONGOOSE = Number(module.mongoose_module.version.split('.')[0]) < 3;
     if (IS_OLD_MONGOOSE) {
-        if (sort.indexOf('-') === 0)
+        if (sort.indexOf('-') === 0) {
             query.sort(sort.slice(1), 'descending');
-        else
+        } else {
             query.sort(sort, 'ascending');
+        }
     } else {
         query.sort(sort);
     }
@@ -277,42 +279,49 @@ function mongooseSort(query, sort) {
 /**
  * List a page of documents from a model
  *
- * @param {String} collectionName
+ * @param {String} model_name
  * @param {Number} start
  * @param {Number} count
- * @param {Function} onReady
+ * @param {Function} callback
  *
  * @api public
  */
-MongooseAdmin.prototype.listModelDocuments = function (collectionName, start, count, filters, sort, onReady) {
-    var listFields = this.models[collectionName].options.list;
+MongooseAdmin.prototype.listModelDocuments = function (model_name, start, count, filters, sort, callback) {
+    var listFields = this.models[model_name].options.list;
     if (listFields) {
         var model;
         try {
-            model = module.mongoose_module.model(collectionName);
+            model = module.mongoose_module.model(model_name);
         }
         catch (e) {
-            model = this.models[collectionName].model;
+            model = this.models[model_name].model;
         }
         _.each(filters, function (value, key) {
-            if (model.schema && typeof(value) === 'string') {
+            if (model.schema && typeof(
+                value
+                ) === 'string') {
                 var type = model.schema.paths[key].options.type;
-                if (type === String)
+                if (type === String) {
                     filters[key] = new RegExp(value, 'i');
-                else if (type === Number)
+                }
+                else if (type === Number) {
                     filters[key] = Number(value) || undefined;
-                else if (type === Boolean)
-                    filters[key] = value === 'true' ? true : false;
+                }
+                else if (type === Boolean) {
+                    filters[key] = value === 'true';
+                }
             }
         });
-        var query = this.models[collectionName].model.find(filters);
-        var sorts = this.models[collectionName].options.order_by || [];
-        var populates = this.models[collectionName].options.list_populate;
-        if (sort)
+        var query = this.models[model_name].model.find(filters);
+        var sorts = this.models[model_name].options.order_by || [];
+        var populates = this.models[model_name].options.list_populate;
+        if (sort) {
             sorts.unshift(sort);
+        }
         if (sorts) {
-            for (var i = 0; i < sorts.length; i++)
+            for (var i = 0; i < sorts.length; i++) {
                 mongooseSort(query, sorts[i]);
+            }
         }
         if (populates) {
             _.each(populates, function (populate) {
@@ -322,149 +331,116 @@ MongooseAdmin.prototype.listModelDocuments = function (collectionName, start, co
         query.skip(start).limit(count).execFind(function (err, documents) {
             if (err) {
                 console.error('Unable to get documents for model because: ' + err);
-                onReady(null, []);
+                callback(null, []);
             } else {
                 var filteredDocuments = [];
                 documents.forEach(function (document) {
                     var d = {};
                     d['_id'] = document['_id'];
                     listFields.forEach(function (listField) {
-                        d[listField] = typeof(document[listField]) === 'function' ? document[listField]() : document.get(listField);
+                        d[listField] = typeof(
+                            document[listField]
+                            ) === 'function' ? document[listField]() : document.get(listField);
                     });
                     filteredDocuments.push(d);
                 });
 
-                onReady(null, filteredDocuments);
+                callback(null, filteredDocuments);
             }
         });
     }
     else {
-        onReady(null, []);
+        callback(null, []);
     }
 };
+
 
 /**
  * Retrieve a single document
  *
- * @param {String} collectionName
+ * @param {String} model_name
  * @param {String} documentId
- * @param {Function} onReady
+ * @param {Function} callback
  *
  * @api public
  */
-MongooseAdmin.prototype.getDocument = function (collectionName, documentId, onReady) {
-    this.models[collectionName].model.findById(documentId, function (err, document) {
-        if (err) {
-            console.log('Unable to get document because: ' + err);
-            onReady('Unable to get document', null);
-        } else {
-            onReady(null, document);
-        }
-    });
+MongooseAdmin.prototype.getDocument = function (model_name, documentId, callback) {
+    this.models[model_name].model.findById(documentId, callback);
 };
+
 
 /**
  * Create a new document
  *
- * @param {String} collectionName
+ * @param {String} model_name
  * @param {Object} params
- * @param {Function} onReady
+ * @param {Function} callback
  *
  * @api public
  */
-MongooseAdmin.prototype.createDocument = function (req, user, collectionName, params, onReady) {
+MongooseAdmin.prototype.createDocument = function (req, user, model_name, params, callback) {
     var self = this;
-    var model = this.models[collectionName].model;
-    var FormType1 = this.models[collectionName].options.form || exports.AdminForm;
-    if (module.permissions.hasPermissions(user, collectionName, 'create')) {
-
-        var form = new FormType1(req, {data: params}, model);
-        form.is_valid(function (err, valid) {
-            if (err) {
-                onReady(err);
-                return;
+    var model_schema = self.models[model_name];
+    var model = this.models[model_name].model;
+    var FormType1 = this.models[model_name].options.form || exports.AdminForm;
+    if (!module.permissions.hasPermissions(user, model_name, 'create')) {
+        return callback('unauthorizaed');
+    }
+    var form = new FormType1(req, {data: params}, model);
+    form.is_valid(function (err, valid) {
+        if (err) throw err;
+        if (!valid) {
+            return callback(form, null);
+        }
+        form.save(function (err, document) {
+            if (err) throw err;
+            if (model_schema.options && model_schema.options.post) {
+                document = model_schema.options.post(document);
             }
-            if (valid) {
-                form.save(function (err, document) {
-                    if (err) {
-                        //console.log('Error saving document: ' + err);
-                        onReady(form);
-                    } else {
-
-                        var model2 = self.models[collectionName];
-                        if (model2.options && model2.options.post) {
-                            document = model2.options.post(document);
-                        }
-                        module.MongooseAdminAudit.logActivity(user, model2.modelName, collectionName, document._id, 'add', null, function () {
-                            onReady(null, document);
-                        });
-                    }
-                });
-            }
-            else {
-                onReady(form, null);
-            }
+            module.MongooseAdminAudit.logActivity(user, model_schema.modelName, model_name, document._id, 'add', null, function () {
+                callback(null, document);
+            });
         });
-    }
-    else {
-        onReady('unauthorizaed');
-    }
+        return null;
+    });
+    return null;
 };
+
 
 /**
  * Update a document
  *
- * @param {String} collectionName
+ * @param {String} model_name
  * @param {String} documentId
  * @param {Object} params
- * @param {Function} onReady
+ * @param {Function} callback
  *
  * @api public
  */
-MongooseAdmin.prototype.updateDocument = function (req, user, collectionName, documentId, params, onReady) {
-    onReady = _.once(onReady);
-    var self = this;
-    var model = this.models[collectionName].model;
-    if (module.permissions.hasPermissions(user, collectionName, 'update')) {
-
-        var FormType = this.models[collectionName].options.form || exports.AdminForm;
-        model.findById(documentId, function (err, document) {
-            if (err) {
-                console.log('Error retrieving document to update: ' + err);
-                onReady('Unable to update', null);
-            } else {
-
-                var form = new FormType(req, {instance: document, data: params}, model);
-                form.is_valid(function (err, valid) {
-                    if (err) {
-                        onReady(err, null);
-                        return;
-                    }
-                    if (valid) {
-                        form.save(function (err, document) {
-                            if (err) {
-                                onReady(form, null);
-                            } else {
-                                var model2 = self.models[collectionName];
-                                if (model2.options && model2.options.post) {
-                                    document = model2.options.post(document);
-                                }
-                                module.MongooseAdminAudit.logActivity(user, model2.modelName, collectionName, document._id, 'edit', null, function () {
-                                    onReady(null, document);
-                                });
-                            }
-                        });
-                    }
-                    else {
-                        onReady(form, null);
-                    }
+MongooseAdmin.prototype.updateDocument = function (req, user, model_name, documentId, params, callback) {
+    var model_schema = this.models[model_name];
+    var model = model_schema.model;
+    if (!module.permissions.hasPermissions(user, model_name, 'update')) {
+        return callback('unauthorized');
+    }
+    var FormType = model_schema.options.form || exports.AdminForm;
+    model.findById(documentId, function (err, doc) {
+        if (err) throw err;
+        var form = new FormType(req, {instance: doc, data: params}, model);
+        form.is_valid(function (err, valid) {
+            if (err) throw err;
+            if (!valid) return callback(form, null);
+            form.save(function (err, doc2) {
+                if (err) throw err;
+                doc2 = model_schema.options && model_schema.options.post && model_schema.options.post(doc2) || doc2;
+                module.MongooseAdminAudit.logActivity(user, model_schema.modelName, model_name, doc2._id, 'edit', null, function () {
+                    return callback(null, doc2);
                 });
-            }
+            });
+            return null;
         });
-    }
-    else {
-        onReady('unauthorized');
-    }
+    });
+    return null;
 };
 
 
@@ -472,32 +448,33 @@ MongooseAdmin.prototype.updateDocument = function (req, user, collectionName, do
  * Delete, remove a document
  *
  * @param {String} user
- * @param {String} collectionName
+ * @param {String} model_name
  * @param {String} documentId
- * @param {Function} onReady
+ * @param {Function} callback
  *
  * @api public
  */
-MongooseAdmin.prototype.deleteDocument = function (user, collectionName, documentId, onReady) {
+MongooseAdmin.prototype.deleteDocument = function (user, model_name, documentId, callback) {
     var self = this;
-    var model_item = self.models[collectionName];
+    var model_item = self.models[model_name];
     var model = model_item.model;
-    if (module.permissions.hasPermissions(user, collectionName, 'delete')) {
+    if (module.permissions.hasPermissions(user, model_name, 'delete')) {
         model.findById(documentId, function (err, document) {
             if (err) {
                 console.log('Error retrieving document to delete: ' + err);
-                onReady('Unable to delete');
+                callback('Unable to delete');
             } else {
                 if (!document) {
-                    onReady('Document not found');
+                    callback('Document not found');
                 } else {
                     forms.unlinkDependencies(model_item.modelName, documentId, function (err) {
-                        if (err)
-                            onReady('unlink dependencies failed');
+                        if (err) {
+                            callback('unlink dependencies failed');
+                        }
                         else {
                             document.remove();
-                            module.MongooseAdminAudit.logActivity(user, model_item.modelName, collectionName, documentId, 'del', null, function () {
-                                onReady(null);
+                            module.MongooseAdminAudit.logActivity(user, model_item.modelName, model_name, documentId, 'del', null, function () {
+                                callback(null);
                             });
                         }
                     });
@@ -506,40 +483,38 @@ MongooseAdmin.prototype.deleteDocument = function (user, collectionName, documen
         });
     }
     else {
-        onReady('unauthorized')
+        callback('unauthorized')
     }
 };
 
-MongooseAdmin.prototype.orderDocuments = function (user, collectionName, data, onReady) {
+MongooseAdmin.prototype.orderDocuments = function (user, model_name, data, callback) {
     //console.log(data);
-    if (module.permissions.hasPermissions(user, collectionName, 'order')) {
-        var sorting_attr = this.models[collectionName].options.sortable;
+    if (module.permissions.hasPermissions(user, model_name, 'order')) {
+        var sorting_attr = this.models[model_name].options.sortable;
         if (sorting_attr) {
             for (var id in data) {
                 var set_dict = {};
                 set_dict[sorting_attr] = data[id];
-                this.models[collectionName].model.update({_id: id}, {$set: set_dict}, function () {});
+                this.models[model_name].model.update({_id: id}, {$set: set_dict}, function () {});
             }
         }
 
-        onReady(null);
+        callback(null);
     }
-    else
-        onReady('unauthorized');
+    else {
+        callback('unauthorized');
+    }
 };
 
-MongooseAdmin.prototype.actionDocuments = function (user, collectionName, actionId, data, onReady) {
-    //console.log(data);
-    if (module.permissions.hasPermissions(user, collectionName, 'action')) {
-        var action = _.find(this.models[collectionName].options.actions, function (action) { return action.value === actionId; });
-        if (action) {
-            action.func(user, data.ids, onReady);
-        }
-        else
-            onReady('no action');
+MongooseAdmin.prototype.actionDocuments = function (user, model_name, aID, data, callback) {
+    if (!module.permissions.hasPermissions(user, model_name, 'action')) {
+        return callback('unauthorized');
     }
-    else
-        onReady('unauthorized');
+    var action = this.models[model_name].options.actions.filter(function (a) {return a.value === aID;})[0];
+    if (!action) {
+        return callback('no action');
+    }
+    return action.func(user, data.ids, callback);
 };
 
 
@@ -559,7 +534,7 @@ MongooseAdmin.userFromSessionStore = function (sessionStore) {
  * Create an admin user account
  *
  * @param {String} username
- * @param {Stirng} password
+ * @param {String} password
  *
  * @api public
  */
@@ -576,13 +551,13 @@ MongooseAdmin.prototype.ensureUserExists = function (username, password) {
  *
  * @param {String} username
  * @param {String} password
- * @param {Function} onReady
+ * @param {Function} callback
  *
  * @api public
  */
-MongooseAdmin.prototype.login = function (username, password, onReady) {
+MongooseAdmin.prototype.login = function (username, password, callback) {
     module.MongooseAdminUser.getByUsernamePassword(username, password, function (err, adminUser) {
-        onReady(err, adminUser);
+        callback(err, adminUser);
     });
 };
 
