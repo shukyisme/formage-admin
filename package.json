@@ -27,14 +27,20 @@
         "underscore": "",
         "async": "",
         "jade": "",
+        "sji": "",
         "formage": "",
     "jest": "",
     "sji": ""
     },
     "devDependencies": {
-        "express": ""
+        "express": "",
+        "request": "",
+        "chai": "",
+        "chai-spies": "",
+        "supertest": "",
+        "nodeunit": ""
     },
-    "main": "mongoose-admin.js",
+    "main": "index.js",
     "keywords": [
         "admin",
         "forms",
@@ -46,7 +52,7 @@
         "url": "https://github.com/Empeeric/formage-admin.git"
     },
     "engines": {
-        "node": "> 0.8.0",
-        "npm": "> 1.1.0"
+        "node": ">= 0.8.14",
+        "npm": ">= 1.1.65"
     }
 }

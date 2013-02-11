@@ -3,11 +3,13 @@ if (!module.parent) console.error('Please don\'t call me directly.I am just the 
 
 var _ = require('underscore');
 var async = require('async');
+var path = require('path');
 
 exports.crypt = require('./crypt');
 var formage = exports.formage = require('formage');
 exports.forms = formage;
 var forms = formage.forms;
+exports.AdminForm = require('./form').AdminForm;
 
 exports.version = '1.0.1';
 
@@ -24,14 +26,7 @@ function MongooseAdmin(app, root) {
 }
 
 
-exports.statics_path = path.join(__dirname, 'public');
-exports.serve_static = function (app, express) {
-    if (module._serving_statics) return;
-    module._serving_statics = true;
 
-    formage.serve_static(app, express);
-    app.use('/', express.static(exports.statics_path));
-};
 
 
 /**
@@ -46,19 +41,18 @@ exports.serve_static = function (app, express) {
 exports.createAdmin = function (app, options, arg_mongoose) {
     module.app = app;
     options = options || {};
+
     //noinspection JSUnresolvedVariable
-    module.mongoose_module = module.mongoose_module || arg_mongoose || module.parent.mongoose || module.parent.mongoose;
+    module.mongoose_module = exports.mongoose_module = exports.mongoose_module || module.mongoose_module || arg_mongoose || module.parent.mongoose || module.parent.mongoose_module;
     var root = options.root || '';
     console.log('\x1b[36mMongooseAdmin is listening at path: \x1b[0m %s', root);
 
-    if (module.mongoose_module) {
-        module.permissions = require('./permissions');
-        exports.AdminForm = require('./form').AdminForm;
-        module.MongooseAdminUser = require('./mongoose_admin_user.js').MongooseAdminUser;
-        module.MongooseAdminAudit = require('./mongoose_admin_audit.js').MongooseAdminAudit;
-        require('./register_paths').registerPaths(MongooseAdmin, app, '/' + root);
-        MongooseAdmin.singleton = new MongooseAdmin(app, '/' + root);
-    }
+    if (!module.mongoose_module) throw new Error("Must have mongoose");
+    module.permissions = require('./permissions');
+    module.MongooseAdminUser = require('./mongoose_admin_user.js').MongooseAdminUser;
+    module.MongooseAdminAudit = require('./mongoose_admin_audit.js').MongooseAdminAudit;
+    require('./register_paths').registerPaths(MongooseAdmin, app, '/' + root);
+    MongooseAdmin.singleton = new MongooseAdmin(app, '/' + root);
     return MongooseAdmin.singleton;
 };
 
@@ -112,7 +106,7 @@ function async_build_model_filters(model, filters, dict) {
                     results.splice(5);
                 }
                 if (ref_name) {
-                    module.mongoose_module.model(ref_name).find()
+                    exports.mongoose_module.model(ref_name).find()
                         .where('_id').in(results).exec(function (err, refs) {
                             if (refs) {
                                 dict.push({
@@ -209,8 +203,9 @@ MongooseAdmin.prototype.registerModel = function (model, name, options) {
  */
 MongooseAdmin.prototype.getRegisteredModels = function (user, callback) {
     var models = [];
+    var schemas = this.models;
     Object.keys(this.models).forEach(function (model_name) {
-        var model_schema = this.models[model_name];
+        var model_schema = schemas[model_name];
         model_schema.model.is_single = model_schema.is_single;
         if (module.permissions.hasPermissions(user, model.modelName, 'view')) {
             models.push(model_schema);
@@ -264,7 +259,7 @@ MongooseAdmin.prototype.modelCounts = function (model_name, filters, callback) {
 
 
 function mongooseSort(query, sort) {
-    var IS_OLD_MONGOOSE = Number(module.mongoose_module.version.split('.')[0]) < 3;
+    var IS_OLD_MONGOOSE = Number(exports.mongoose_module.version.split('.')[0]) < 3;
     if (IS_OLD_MONGOOSE) {
         if (sort.indexOf('-') === 0) {
             query.sort(sort.slice(1), 'descending');
@@ -291,7 +286,7 @@ MongooseAdmin.prototype.listModelDocuments = function (model_name, start, count,
     if (listFields) {
         var model;
         try {
-            model = module.mongoose_module.model(model_name);
+            model = exports.mongoose_module.model(model_name);
         }
         catch (e) {
             model = this.models[model_name].model;
@@ -487,24 +482,26 @@ MongooseAdmin.prototype.deleteDocument = function (user, model_name, documentId,
     }
 };
 
-MongooseAdmin.prototype.orderDocuments = function (user, model_name, data, callback) {
-    //console.log(data);
-    if (module.permissions.hasPermissions(user, model_name, 'order')) {
-        var sorting_attr = this.models[model_name].options.sortable;
-        if (sorting_attr) {
-            for (var id in data) {
-                var set_dict = {};
-                set_dict[sorting_attr] = data[id];
-                this.models[model_name].model.update({_id: id}, {$set: set_dict}, function () {});
-            }
-        }
 
-        callback(null);
+MongooseAdmin.prototype.orderDocuments = function (user, model_name, data_dict, callback) {
+    var model = this.models[model_name].model;
+    if (!module.permissions.hasPermissions(user, model_name, 'order')) {
+        return callback('unauthorized');
     }
-    else {
-        callback('unauthorized');
+    var sorting_attr = this.models[model_name].options.sortable;
+    if (!sorting_attr) {
+        return callback(null);
     }
+    model.find().where('_id').in(Object.keys(data)).stream({
+        end: callback,
+        write: function (doc) {
+            doc[sorting_attr] = data_dict[doc.id];
+            doc.save(console.log);
+        }
+    });
+    return null;
 };
+
 
 MongooseAdmin.prototype.actionDocuments = function (user, model_name, aID, data, callback) {
     if (!module.permissions.hasPermissions(user, model_name, 'action')) {

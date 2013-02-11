@@ -1,10 +1,12 @@
 'use strict';
+if (!module.parent) console.error('Please don\'t call me directly.I am just the main app\'s minion.') || process.process.exit(1);
+
 var querystring = require('querystring'),
     Url = require('url'),
-    permissions = require('../permissions'),
     _ = require('underscore'),
-    AdminForm = require('../form').AdminForm,
-    forms = require('formage').forms;
+    forms = require('formage').forms,
+    permissions = require('../permissions'),
+    AdminForm = require('../form').AdminForm;
 
 
 var MongooseAdmin;
