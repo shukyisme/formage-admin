@@ -8,7 +8,7 @@
     "email": "ishai@empeeric.com"
   },
   "contributors" : [
-    "Itai Perets <itai@empeeric.com> (http://www.empeeric.com/)",
+    "Etai Peretz <etai@empeeric.com> (http://www.empeeric.com/)",
     "Refael Ackermann <refael@empeeric.com> (http://www.empeeric.com/)",
     "Alon Valadji <alon@empeeric.com> (http://www.empeeric.com/)"
   ],
@@ -18,7 +18,8 @@
     "jade": "",
     "mongoose": "",
     "formage": "",
-    "jest": ""
+    "jest": "",
+    "sji": ""
   },
   "devDependencies": {
     "express": "",
