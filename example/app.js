@@ -26,7 +26,7 @@ app.configure('development', function(){
 });
 
 require('mongoose').connect(app.get('mongo'));
-require('./admin')(app);
+require('../index').init(app, require('./models'));
 
 app.get('/', function(req, res){
     res.redirect('/admin');
