@@ -16,12 +16,12 @@ app.configure('all', function(){
     app.use(express.bodyParser());
     app.use(express.methodOverride());
     app.use(express.cookieParser('magical secret admin'));
-    app.use(express.cookieSession({cookie: { maxAge: 60 * 1000 * 20 }}));
+    app.use(express.cookieSession({ cookie: { maxAge: 60 * 1000 * 20 } }));
     app.use(app.router);
 });
 
 app.configure('development', function(){
-    app.use(express.logger('dev'));
+//    app.use(express.logger('dev'));
     app.use(express.errorHandler());
 });
 
