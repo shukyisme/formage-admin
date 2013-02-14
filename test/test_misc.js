@@ -7,6 +7,11 @@ var chai = require('chai')
 chai.spy = function () {};
 chai.use(spies);
 var supertest = require('supertest');
+var nconf = require("nconf");
+nconf;
+nconf.set('database:host', '127.0.0.1');
+nconf.set('database:port', 5984);
+nconf.get('database');
 
 module.exports = testCase({
     "0": function (test) {

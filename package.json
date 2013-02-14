@@ -38,6 +38,7 @@
         "chai": "",
         "chai-spies": "",
         "supertest": "",
+        "nconf": "",
         "nodeunit": ""
     },
     "main": "index.js",
