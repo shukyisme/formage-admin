@@ -1,36 +1,46 @@
+'use strict';
+if (!module.parent) console.error('Please don\'t call me directly.I am just the main app\'s minion.') || process.process.exit(1);
+
 var Class = require('sji')
     , async = require('async')
-    , AdminModel = require('./admin-model')
-    , AdminUser = require('./mongoose_admin_user').MongooseAdminUser
-    , permissions = require('./permissions')
     , formage = require('formage')
     , paths = require('./paths');
+var AdminModel, AdminUser, permissions;
+
 
 /**
  * Admin app model
  * @type {*}
  */
-var FormageAdmin = module.exports = Class.extend({
+var FormateAdmin = module.exports.FormageAdmin = Class.extend({
     /**
      * Inits the admin with an express app and options
      * @param app
      * @param options
      * {root:'/', title:'Backoffice'}
      */
-    init: function (app, options) {
+    init: function (app, options, arg_mongoose) {
         options = options || {};
+
+        //noinspection OverlyComplexBooleanExpressionJS
+        module.mongoose_module = exports.mongoose_module = exports.mongoose_module || module.mongoose_module || arg_mongoose || module.parent.mongoose || module.parent.mongoose_module;
+        AdminModel = require('./admin-model');
+        AdminUser = require('./mongoose_admin_user').MongooseAdminUser;
+        permissions = require('./permissions');
 
         this.app = app;
         this.root = options.root || '/admin';
         this.title = options.title || 'Formage-Admin';
 
-        if (this.root[0] != '/')
+        if (this.root[0] != '/') {
             this.root = '/' + this.root;
+        }
         console.log('FormageAdmin is listening at path: ', this.root);
 
         paths.registerPaths(this, app, this.root);
 
         app.use(require('express').static(__dirname + '/public'));
+        app.use(this.middleware());
         this.models = {};
     },
     /**
@@ -118,13 +128,13 @@ var FormageAdmin = module.exports = Class.extend({
         });
     },
 
-    middleware: function (req, res) {
+    middleware: function() {return function (req, res, next) {
         var self = this;
         var adminUser = req.session._mongooseAdminUser ? AdminUser.fromSessionStore(req.session._mongooseAdminUser) : null;
         if (!adminUser) {
-            console.log('redirecting to', this.buildPath('/login'));
-            res.redirect(this.buildPath('/login'));
-            return false;
+            var login_path = self.buildPath('/login');
+            console.log('redirecting to', login_path);
+            return res.redirect(401, login_path);
         }
         req.adminUser = adminUser;
         res.handle500 = function (err) {
@@ -146,8 +156,8 @@ var FormageAdmin = module.exports = Class.extend({
             res.render('401', {user: user, model: model, permission: permission});
             self.popExpressConfig(config);
         };
-        return true;
-    },
+        return next();
+    }},
     // Routes
     login: function (req, res) {
         var config = this.pushExpressConfig();
@@ -160,11 +170,13 @@ var FormageAdmin = module.exports = Class.extend({
     },
     loginPost: function (req, res) {
         AdminUser.getByUsernamePassword(req.body.username, req.body.password, function (err, adminUser) {
-            if (err)
+            if (err) {
                 return res.send(500);
+            }
 
-            if (!adminUser)
+            if (!adminUser) {
                 return res.send(401, 'Not authorized');
+            }
 
             req.session._mongooseAdminUser = adminUser.toSessionStore();
             res.writeHead(200, {"Content-Type": "application/json"});
@@ -177,8 +189,6 @@ var FormageAdmin = module.exports = Class.extend({
         res.redirect(this.buildPath('/'));
     },
     index: function (req, res) {
-        if (!this.middleware(req, res))
-            return;
         var config = this.pushExpressConfig();
         res.render('models.jade',
             {layout: 'layout.jade',
@@ -191,9 +201,6 @@ var FormageAdmin = module.exports = Class.extend({
         this.popExpressConfig(config);
     },
     model: function (req, res) {
-
-        if (!this.middleware(req, res))
-            return;
         var model_name = req.params.modelName;
         if (!model_name in this.models) {
             res.handle404();
@@ -206,9 +213,6 @@ var FormageAdmin = module.exports = Class.extend({
         this.models[model_name].index(req, res);
     },
     document: function (req, res) {
-        if (!this.middleware(req, res))
-            return;
-
         var model_name = req.params.modelName;
         if (!model_name in this.models) {
             res.handle404();
@@ -221,9 +225,6 @@ var FormageAdmin = module.exports = Class.extend({
         this.models[model_name].document(req, res);
     },
     documentPost: function (req, res) {
-        if (!this.middleware(req, res))
-            return;
-
         var model_name = req.params.modelName;
         if (!model_name in this.models) {
             res.handle404();
@@ -245,9 +246,6 @@ var FormageAdmin = module.exports = Class.extend({
         }
     },
     actionDocuments: function (req, res) {
-        if (!this.middleware(req, res))
-            return;
-
         var model_name = req.params.modelName;
         if (!model_name in this.models) {
             res.handle404();
@@ -262,9 +260,6 @@ var FormageAdmin = module.exports = Class.extend({
         this.models[model_name].action(req, res);
     },
     orderDocuments: function (req, res) {
-        if (!this.middleware(req, res))
-            return;
-
         var model_name = req.params.collectionName;
         if (!model_name in this.models) {
             res.handle404();
@@ -288,9 +283,6 @@ var FormageAdmin = module.exports = Class.extend({
         });
     },
     deleteDocument: function (req, res) {
-        if (!this.middleware(req, res))
-            return;
-
         var model_name = req.params.collectionName;
         if (!model_name in this.models) {
             res.handle404();

@@ -1,38 +1,20 @@
+'use strict';
+if (!module.parent) console.error('Please don\'t call me directly.I am just the main app\'s minion.') || process.process.exit(1);
 
-var path_join = function() {
-    var str = '';
-    for(var i=0; i<arguments.length; i++)
-    {
-        var comp = arguments[i].replace(/^\//,'').replace(/\/$/,'');
-        if(comp == '')
-            continue;
-        str += '/' + comp;
-    }
-    return str;
-};
+var path = require('path');
+var url_join = exports.testable_url_join = function () { return path.join.apply(path, arguments).replace(/\\/g, '/'); };
 
-exports.registerPaths = function(admin,app, root) {
-
-    var method = function(func){
-        return function(req,res){
-            func.call(admin,req,res);
-        };
-    };
-
-    if (root.length > 1) {
-        app.get(root, method(admin.index));
-    } else {
-        app.get('/', method(admin.index));
-    }
-    app.get(path_join(root, '/login'), method(admin.login));
-    app.get(path_join(root, '/logout'), method(admin.logout));
-    app.get(path_join(root, '/model/:modelName'), method(admin.model));
-    app.get(path_join(root, '/model/:modelName/document/:documentId'), method(admin.document));
-    app.post(path_join(root, '/model/:modelName/document/:documentId'), method(admin.documentPost));
-
-    app.post(path_join(root, '/json/login'), method(admin.loginPost));
-    app.post(path_join(root, '/json/dependencies'), method(admin.checkDependencies));
-    app.post(path_join(root, '/json/model/:collectionName/order'), method(admin.orderDocuments));
-    app.post(path_join(root, '/json/model/:modelName/action/:actionId'), method(admin.actionDocuments));
-    app.delete(path_join(root,  '/json/model/:collectionName/document'), method(admin.deleteDocument));
+exports.registerPaths = function (admin, app, root) {
+    root = root || '/';
+    app.get(root, admin.index);
+    app.get(url_join(root, '/login'), admin.login);
+    app.get(url_join(root, '/logout'), admin.logout);
+    app.get(url_join(root, '/model/:modelName'), admin.model);
+    app.get(url_join(root, '/model/:modelName/document/:documentId'), admin.document);
+    app.post(url_join(root, '/model/:modelName/document/:documentId'), admin.documentPost);
+    app.post(url_join(root, '/json/login'), admin.loginPost);
+    app.post(url_join(root, '/json/dependencies'), admin.checkDependencies);
+    app.post(url_join(root, '/json/model/:collectionName/order'), admin.orderDocuments);
+    app.post(url_join(root, '/json/model/:modelName/action/:actionId'), admin.actionDocuments);
+    app.delete(url_join(root, '/json/model/:collectionName/document'), admin.deleteDocument);
 };
