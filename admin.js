@@ -1,10 +1,11 @@
 'use strict';
 if (!module.parent) console.error('Please don\'t call me directly.I am just the main app\'s minion.') || process.process.exit(1);
 
-var Class = require('sji')
-    , async = require('async')
-    , formage = require('formage')
-    , paths = require('./paths');
+var Class = require('sji'),
+    async = require('async'),
+    formage = require('formage'),
+    paths = require('./paths');
+
 var AdminModel, AdminUser, permissions;
 
 
@@ -12,18 +13,20 @@ var AdminModel, AdminUser, permissions;
  * Admin app model
  * @type {*}
  */
-var FormateAdmin = module.exports.FormageAdmin = Class.extend({
+var Admin = module.exports = Class.extend({
     /**
      * Inits the admin with an express app and options
      * @param app
      * @param options
      * {root:'/', title:'Backoffice'}
      */
-    init: function (app, options, arg_mongoose) {
+    init: function (app, arg_mongoose, options) {
         options = options || {};
 
         //noinspection OverlyComplexBooleanExpressionJS
-        module.mongoose_module = exports.mongoose_module = exports.mongoose_module || module.mongoose_module || arg_mongoose || module.parent.mongoose || module.parent.mongoose_module;
+        module.mongoose_module = exports.mongoose_module =
+            exports.mongoose_module || module.mongoose_module || arg_mongoose || module.parent.mongoose || module.parent.mongoose_module;
+
         AdminModel = require('./admin-model');
         AdminUser = require('./mongoose_admin_user').MongooseAdminUser;
         permissions = require('./permissions');
@@ -298,19 +301,9 @@ var FormateAdmin = module.exports.FormageAdmin = Class.extend({
 
 });
 
-FormageAdmin.createAdmin = function (app, options) {
-    console.error('FormageAdmin: Please stop using createAdmin() and move to init().');
-    return new FormageAdmin(app, options);
-};
 
-
-/*
-    require('formage-admin').init(app, models);
- */
-FormageAdmin.init = function(app, models, options) {
-    formage.serve_static(app);
-
-    var admin = new FormageAdmin(app, options);
+Admin.create = function(app, mongoose, models, options) {
+    var admin = new Admin(app, mongoose, options);
 
     for (var name in models) {
         var model = models[name];

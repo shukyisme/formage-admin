@@ -1,10 +1,25 @@
 'use strict';
 if (!module.parent) console.error('Please don\'t call me directly.I am just the main app\'s minion.') || process.process.exit(1);
 
-var path = require('path');
-var FormageAdmin = require('./admin.js').FormageAdmin;
-module.exports.version = '1.0.1';
-var formage = module.exports.formage = require('formage');
+var path = require('path'),
+    formage = require('formage'),
+    Admin = require('./admin.js');
+
+
+/*
+ usage:
+    require('formage-admin')(app, mongoose, options);
+ */
+module.exports = function(app, mongoose, models, options) {
+    return Admin.create(app, mongoose, models, options);
+};
+module.exports.createAdmin = function (app, mongoose, options) {
+    return new Admin(app, mongoose, options);
+};
+
+
+module.exports.version = '1.0.2';
+module.exports.formage = formage;
 module.exports.crypt = require('./crypt');
 module.exports.AdminForm = require('./form').AdminForm;
 
@@ -40,11 +55,6 @@ module.exports.register_models = function (models) {
 
 
 module.exports.set_amazon_credentials = module.exports.formage.set_amazon_credentials;
-
-
-module.exports.createAdmin = function (app, options, mongoose) {
-    return new FormageAdmin(app, options, mongoose);
-};
 
 
 // Deprecated

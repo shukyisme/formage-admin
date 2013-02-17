@@ -1,10 +1,7 @@
-/**
- * Module dependencies.
- */
-
 var express = require('express'),
     http = require('http'),
-    path = require('path');
+    path = require('path'),
+    mongoose = require('mongoose');
 
 var app = express();
 
@@ -25,8 +22,10 @@ app.configure('development', function(){
     app.use(express.errorHandler());
 });
 
-require('mongoose').connect(app.get('mongo'));
-require('../index').init(app, require('./models'));
+mongoose.connect(app.get('mongo'));
+var admin = require('../index')(app, mongoose, require('./models'), {
+    title: 'Formage-Admin Example'
+});
 
 app.get('/', function(req, res){
     res.redirect('/admin');

@@ -2,16 +2,17 @@ var mongoose = require('mongoose'),
     Schema = mongoose.Schema,
     ObjectId = Schema.Types.ObjectId;
 
-var s = new Schema({
+var schema = new Schema({
+//    parent: { type: ObjectId, ref: 'pages' },
     title: { type: String, required: true },
-
+    enum: { type: String, enum: ['', 'A', 'B', 'C'] },
     list: [{
         name: { type: String, required: true }
     }]
 });
 
-s.methods.toString = function() {
+schema.methods.toString = function() {
     return this.title;
 };
 
-module.exports = mongoose.model('pages', s);
+module.exports = mongoose.model('pages', schema);
