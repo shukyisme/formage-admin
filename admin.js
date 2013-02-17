@@ -193,14 +193,14 @@ var Admin = module.exports = Class.extend({
     },
     index: function (req, res) {
         var config = this.pushExpressConfig();
-        res.render('models.jade',
-            {layout: 'layout.jade',
-                'pageTitle': 'Admin Site',
-                'models': this.models,
-                'renderedHead': '',
-                'adminTitle': this.title,
-                'rootPath': this.root
-            });
+        res.render('models.jade', {
+            layout: 'layout.jade',
+            'pageTitle': 'Admin Site',
+            'models': this.models,
+            'renderedHead': '',
+            'adminTitle': this.title,
+            'rootPath': this.root
+        });
         this.popExpressConfig(config);
     },
     model: function (req, res) {
@@ -302,8 +302,8 @@ var Admin = module.exports = Class.extend({
 });
 
 
-Admin.create = function(app, mongoose, models, options) {
-    var admin = new Admin(app, mongoose, options);
+Admin.create = function(app, mongoose, models, opt) {
+    var admin = new Admin(app, mongoose, opt);
 
     for (var name in models) {
         var model = models[name];

@@ -11,6 +11,7 @@ var path = require('path'),
     require('formage-admin')(app, mongoose, options);
  */
 module.exports = function(app, mongoose, models, options) {
+    module.exports.serve_static(app, require('express'));
     return Admin.create(app, mongoose, models, options);
 };
 module.exports.createAdmin = function (app, mongoose, options) {
