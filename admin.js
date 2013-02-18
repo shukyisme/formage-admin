@@ -17,15 +17,16 @@ var Admin = module.exports = Class.extend({
     /**
      * Inits the admin with an express app and options
      * @param app
+     * @param mongoose
      * @param options
-     * {root:'/', title:'Backoffice'}
+     * {root:'/', title:'Formage-Admin'}
      */
-    init: function (app, arg_mongoose, options) {
+    init: function (app, mongoose, options) {
         options = options || {};
 
         //noinspection OverlyComplexBooleanExpressionJS
         module.mongoose_module = exports.mongoose_module =
-            exports.mongoose_module || module.mongoose_module || arg_mongoose || module.parent.mongoose || module.parent.mongoose_module;
+            exports.mongoose_module || module.mongoose_module || mongoose || module.parent.mongoose || module.parent.mongoose_module;
 
         AdminModel = require('./admin-model');
         AdminUser = require('./mongoose_admin_user').MongooseAdminUser;
