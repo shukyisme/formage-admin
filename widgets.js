@@ -141,8 +141,8 @@ exports.TimeWidget = exports.InputWidget.extend({
     init: function (options) {
         this._super('time', options);
         this.attrs.class.push('nf_timepicker');
-        this.static.js.push('/node-forms/js/bootstrap-timepicker.js');
-        this.static.css.push('/node-forms/css/bootstrap-datepicker.js');
+        this.static.js.push('/node-forms/timepicker/bootstrap-timepicker.js');
+        this.static.css.push('/node-forms/timepicker/datepicker.css');
     },
     render: function (res) {
         res.write('<div class="input-append bootstrap-timepicker-component">');
