@@ -22,10 +22,12 @@ exports.checkDependecies = function (model, id, callback) {
     var models_to_query = {};
     for (var modelName in Models) {
         var model_ref = Models[modelName];
-        if (!model_ref)
+        if (!model_ref) {
             continue;
-        if (!model_ref.schema)
+        }
+        if (!model_ref.schema) {
             continue;
+        }
         for (var fieldName in model_ref.schema.paths) {
             if (model_ref.schema.paths[fieldName].options.ref && model_ref.schema.paths[fieldName].options.ref === model) {
                 models_to_query[modelName] = models_to_query[modelName] || [];
@@ -59,8 +61,9 @@ exports.checkDependecies = function (model, id, callback) {
 
 exports.unlinkDependencies = function (model, id, callback) {
     exports.checkDependecies(model, id, function (err, deps) {
-        if (err)
+        if (err) {
             callback(err);
+        }
         else {
             async.forEach(deps, function (dep, cbk) {
                 var schema = dep.schema;
@@ -69,23 +72,26 @@ exports.unlinkDependencies = function (model, id, callback) {
                     if (schema.paths[fieldName].options.ref && schema.paths[fieldName].options.ref === model && dep[fieldName] + '' === id) {
                         //noinspection JSUnresolvedVariable
                         switch (schema.paths[fieldName].options.onDelete) {
-                            case 'delete':
-                                shouldRemove = true;
-                                break;
-                            case 'setNull':
-                                dep[fieldName] = null;
-                                shouldSave = true;
-                                break;
+                        case 'delete':
+                            shouldRemove = true;
+                            break;
+                        case 'setNull':
+                            dep[fieldName] = null;
+                            shouldSave = true;
+                            break;
                         }
                     }
                 }
-                if (shouldRemove)
+                if (shouldRemove) {
                     dep.remove(cbk);
+                }
                 else {
-                    if (shouldSave)
+                    if (shouldSave) {
                         dep.save(cbk);
-                    else
+                    }
+                    else {
                         cbk();
+                    }
                 }
             }, callback);
         }
@@ -133,14 +139,17 @@ var BaseForm = exports.BaseForm = Class.extend({
             };
 
             self.is_valid(function (err, valid) {
-                if (err || !valid)
+                if (err || !valid) {
                     on_error(err);
+                }
                 else {
                     self.save(function (err, result) {
-                        if (err)
+                        if (err) {
                             on_error(err);
-                        else
+                        }
+                        else {
                             self.handle_success(null, result);
+                        }
                     });
                 }
             });
@@ -150,10 +159,12 @@ var BaseForm = exports.BaseForm = Class.extend({
         var self = this;
         _.each(this.fields, function (field) {
             var _static = field.get_static();
-            if (_static.js.length)
+            if (_static.js.length) {
                 self.static.js = _.union(self.static.js, _static.js);
-            if (_static.css.length)
+            }
+            if (_static.css.length) {
                 self.static.css = _.union(self.static.css, _static.css);
+            }
         });
     },
     render_head: function () {
@@ -184,8 +195,9 @@ var BaseForm = exports.BaseForm = Class.extend({
         var all_fields = self.fields;
         self.fields = {};
         _.each(all_fields, function (field, name) {
-            if (_.indexOf(self.exclude, name) === -1)
+            if (_.indexOf(self.exclude, name) === -1) {
                 self.fields[name] = field;
+            }
         });
     },
     get_value: function (field_name) {
@@ -200,23 +212,28 @@ var BaseForm = exports.BaseForm = Class.extend({
         this._fields_ready = true;
     },
     save: function (callback) {
-        if (!this._fields_ready)
+        if (!this._fields_ready) {
             this.init_fields();
+        }
         // not implemented
-        if (!this.errors)
+        if (!this.errors) {
             this.is_valid();
-        if (Object.keys(this.errors) > 0)
+        }
+        if (Object.keys(this.errors) > 0) {
             callback({message: 'form did not validate'});
-        else
+        }
+        else {
             this.actual_save(callback);
+        }
     },
     actual_save: function (callback) {
         callback(new Error('not implemented'));
     },
     is_valid: function (callback) {
         var self = this;
-        if (!self._fields_ready)
+        if (!self._fields_ready) {
             self.init_fields();
+        }
         self.errors = {};
         self.clean_values = {};
         var clean_funcs = [];
@@ -224,13 +241,16 @@ var BaseForm = exports.BaseForm = Class.extend({
         function create_clean_func(field_name) {
             return function (cbk) {
                 self.fields[field_name].clean_value(self.request, function (err) {
-                    if (err)
+                    if (err) {
                         cbk(err);
+                    }
                     else {
-                        if (self.fields[field_name].errors && self.fields[field_name].errors.length)
+                        if (self.fields[field_name].errors && self.fields[field_name].errors.length) {
                             self.errors[field_name] = self.fields[field_name].errors;
-                        else
+                        }
+                        else {
                             self.clean_values[field_name] = self.fields[field_name].value;
+                        }
                         cbk(null);
                     }
                 });
@@ -241,15 +261,18 @@ var BaseForm = exports.BaseForm = Class.extend({
             clean_funcs.push(create_clean_func(field_name));
         }
         async.parallel(clean_funcs, function (err) {
-            if (err)
+            if (err) {
                 callback(err);
-            else
+            }
+            else {
                 callback(null, Object.keys(self.errors).length === 0);
+            }
         });
     },
     render_ready: function (callback) {
-        if (!this._fields_ready)
+        if (!this._fields_ready) {
             this.init_fields();
+        }
         var funcs = [];
 
         function render_func(field) {
@@ -262,10 +285,12 @@ var BaseForm = exports.BaseForm = Class.extend({
             funcs.push(render_func(this.fields[field_name]));
         }
         async.parallel(funcs, function (err) {
-            if (err)
+            if (err) {
                 callback(err);
-            else
+            }
+            else {
                 callback(null);
+            }
         });
     },
     render: function (res, options) {
@@ -274,37 +299,48 @@ var BaseForm = exports.BaseForm = Class.extend({
         function render_fields(fields) {
             for (var i = 0; i < fields.length; i++) {
                 var field_name = fields[i];
-                if (typeof(field_name) === 'object')
+                if (typeof(field_name) === 'object') {
                     render_fieldset(field_name);
+                }
                 else {
-                    if (field_name in self.fields)
+                    if (field_name in self.fields) {
                         self.fields[field_name].render_with_label(res);
+                    }
                 }
             }
         }
+
         function render_fieldset(fieldset) {
-            if (!fieldset || !fieldset.fields || !fieldset.fields.length)
+            if (!fieldset || !fieldset.fields || !fieldset.fields.length) {
                 return;
-            if (fieldset['title'] && fieldset['title'] !== '' && !options['hide_fieldsets'])
+            }
+            if (fieldset['title'] && fieldset['title'] !== '' && !options['hide_fieldsets']) {
                 res.write('<div class="nf_fieldset">');
+            }
             var title = fieldset['title'] || '';
-            if (title !== '' && !options['hide_titles'])
+            if (title !== '' && !options['hide_titles']) {
                 res.write('<h2>' + title + '</h2>');
+            }
             res.write('<div>');
             var fields = fieldset.fields;
-            if (fields)
+            if (fields) {
                 render_fields(fields);
+            }
             res.write('</div>');
-            if (fieldset['title'] && fieldset['title'] !== '' && !options['hide_fieldsets'])
+            if (fieldset['title'] && fieldset['title'] !== '' && !options['hide_fieldsets']) {
                 res.write("</div>");
+            }
         }
+
         if (self.fieldsets) {
             render_fields(self.fieldsets[0].fields);
         }
-        else
+        else {
             render_fields(Object.keys(self.fields));
-        if (_.indexOf(self.exclude, 'id') === -1 && self.instance)
+        }
+        if (_.indexOf(self.exclude, 'id') === -1 && self.instance) {
             res.write('<input type="hidden" id="document_id" name="_id" value="' + (self.instance.isNew ? '' : self.instance.id) + '" />');
+        }
     },
     to_html: function () {
         var self = this;
@@ -340,10 +376,12 @@ var MongooseForm = exports.MongooseForm = BaseForm.extend({
         for (var field in field_paths) {
             var parts = field.split('.');
             var form_field = this.mongoose_field_to_form_field(field_paths[field], parts[parts.length - 1], field_tree);
-            if (form_field)
+            if (form_field) {
                 ref_fields[field] = form_field;
-            else
+            }
+            else {
                 continue;
+            }
             var parent_fieldset = ref_fieldsets[0];
             for (var i = 0; i < parts.length - 1; i++) {
                 var fieldset = null;
@@ -365,12 +403,15 @@ var MongooseForm = exports.MongooseForm = BaseForm.extend({
         }
     },
     mongoose_field_to_form_field: function (mongoose_field, name, tree) {
-        if (_.indexOf(this.exclude, name) > -1)
+        if (_.indexOf(this.exclude, name) > -1) {
             return null;
-        if (typeof(mongoose_field.options.type) === 'undefined')
+        }
+        if (typeof(mongoose_field.options.type) === 'undefined') {
             return null;
-        if (mongoose_field.options.auto || ('editable' in mongoose_field.options && !mongoose_field.options.editable))
-            return null;//new fields.ReadonlyField({});
+        }
+        if (mongoose_field.options.auto || ('editable' in mongoose_field.options && !mongoose_field.options.editable)) {
+            return null;
+        }//new fields.ReadonlyField({});
         var is_required = mongoose_field.options.required ? true : false;
         var def = mongoose_field.options['default'];
         var validators = [];
@@ -394,30 +435,36 @@ var MongooseForm = exports.MongooseForm = BaseForm.extend({
         if (mongoose_field.options.min != null) {
             var min = mongoose_field.options.min;
             validators.push(function (value) {
-                if (value >= min)
+                if (value >= min) {
                     return true;
-                else
+                }
+                else {
                     return 'value must be equal or greater than ' + min;
+                }
             });
             options.min = min;
         }
         if (mongoose_field.options.max != null) {
             var max = mongoose_field.options.max;
             validators.push(function (value) {
-                if (value <= max)
+                if (value <= max) {
                     return true;
-                else
+                }
+                else {
                     return 'value must be equal or lower than ' + max;
+                }
             });
             options.max = max;
         }
         if (mongoose_field.options.step != null) {
             var step = mongoose_field.options.step;
             validators.push(function (value) {
-                if (Math.round(value / step) === value / step)
+                if (Math.round(value / step) === value / step) {
                     return true;
-                else
+                }
+                else {
                     return 'value must be according to step ' + step;
+                }
             });
             options.step = step;
         }
@@ -427,44 +474,54 @@ var MongooseForm = exports.MongooseForm = BaseForm.extend({
             for (var j = 0; j < path_parts.length; j++) {
                 inner_schema = inner_schema[path_parts[j]];
             }
-            if (Array.isArray(inner_schema))
+            if (Array.isArray(inner_schema)) {
                 inner_schema = inner_schema[0];
+            }
             else {
-                if (inner_schema && inner_schema.type && Array.isArray(inner_schema.type))
+                if (inner_schema && inner_schema.type && Array.isArray(inner_schema.type)) {
                     inner_schema = inner_schema.type[0];
+                }
             }
             var schema;
             if (inner_schema && (typeof(inner_schema) !== 'object' || inner_schema.type)) {
                 var single_field = {};
-                for (var attr in inner_schema)
+                for (var attr in inner_schema) {
                     single_field[attr] = inner_schema[attr];
-                for (var attr in  mongoose_field.options)
+                }
+                for (var attr in  mongoose_field.options) {
                     single_field[attr] = mongoose_field.options[attr];
+                }
                 single_field['type'] = mongoose_field.options.type[0];
                 schema = new module.parent.mongoose_module.Schema({__self__: single_field});
             }
             else {
-                if (mongoose_field.options.type[0].paths && mongoose_field.options.type[0].tree)
+                if (mongoose_field.options.type[0].paths && mongoose_field.options.type[0].tree) {
                     schema = mongoose_field.options.type[0];
-                else
+                }
+                else {
                     schema = new module.parent.mongoose_module.Schema(mongoose_field.options.type[0]);
+                }
             }
             var list_fields = {};
             var list_fieldsets = [];
             this.mongoose_fields_to_fieldsets(schema.paths, schema.tree, list_fields, list_fieldsets);
             return new fields.ListField(options, list_fields, list_fieldsets);
         }
-        if (mongoose_field.options.type.name === 'File')
+        if (mongoose_field.options.type.name === 'File') {
             return new fields.FileField(options);
+        }
 
-        if (mongoose_field.options.type.name === 'Picture')
+        if (mongoose_field.options.type.name === 'Picture') {
             return new fields.PictureField(options);
+        }
 
-        if (mongoose_field.options.type.name === 'GeoPoint')
+        if (mongoose_field.options.type.name === 'GeoPoint') {
             return new fields.GeoField(options);
+        }
 
-        if (mongoose_field.options.type.name === 'Mixed')
+        if (mongoose_field.options.type.name === 'Mixed') {
             return new fields.DictField(options);
+        }
 
         if (mongoose_field.options.ref) {
             var model = Models[mongoose_field.options.ref];
@@ -477,16 +534,19 @@ var MongooseForm = exports.MongooseForm = BaseForm.extend({
         if (mongoose_field.options.enum) {
             return new fields.EnumField(options, mongoose_field.options.enum);
         }
-        if (mongoose_field.options.type === Boolean)
+        if (mongoose_field.options.type === Boolean) {
             return new fields.BooleanField(options);
+        }
         if (mongoose_field.options.type.name === 'Integer') {
             options.step = options.step != null ? options.step : 1.0;
             return new fields.NumberField(options);
         }
-        if (mongoose_field.options.type === Number)
+        if (mongoose_field.options.type === Number) {
             return new fields.NumberField(options);
-        if (mongoose_field.options.type === Date)
+        }
+        if (mongoose_field.options.type === Date) {
             return new fields.DateField(options);
+        }
         if (mongoose_field.options.type.name === 'Html') {
             options.widget = widgets.RichTextAreaWidget;
             return new fields.StringField(options);
@@ -495,8 +555,9 @@ var MongooseForm = exports.MongooseForm = BaseForm.extend({
             options.widget = widgets.TextAreaWidget;
             return new fields.StringField(options);
         }
-        if (mongoose_field.instance && mongoose_field.instance === 'String')
+        if (mongoose_field.instance && mongoose_field.instance === 'String') {
             return new fields.StringField(options);
+        }
         return new fields.StringField(options);
     },
     get_value: function (field_name) {
@@ -504,8 +565,9 @@ var MongooseForm = exports.MongooseForm = BaseForm.extend({
     },
     actual_save: function (callback) {
         var self = this;
-        for (var field_name in self.clean_values)
+        for (var field_name in self.clean_values) {
             self.instance.set(field_name, self.clean_values[field_name]);
+        }
         self.instance.save(function (err, object) {
 
             if (err) {
