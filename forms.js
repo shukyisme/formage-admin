@@ -560,33 +560,33 @@ var MongooseForm = exports.MongooseForm = BaseForm.extend({
         }
         return new fields.StringField(options);
     },
+
+
     get_value: function (field_name) {
         return (typeof(this.data[field_name]) === 'undefined' || this.data[field_name] == null) ? this.instance.get(field_name) : this.data[field_name];
     },
+
+
     actual_save: function (callback) {
         var self = this;
         for (var field_name in self.clean_values) {
             self.instance.set(field_name, self.clean_values[field_name]);
         }
         self.instance.save(function (err, object) {
-
-            if (err) {
-                console.error(err);
-                console.trace();
-                if (err.errors) {
-                    self.errors = {};
-                    _.each(err.errors, function (error, key) {
-                        if (self.fields[key] instanceof fields.BaseField) {
-                            self.errors[key] = [error.type || error.message || error];
-                            self.fields[key].errors = self.errors[key];
-                        }
-                    });
+            // Doing it flipped, since no error is simple
+            if (!err) return callback(null, object);
+            // Handle the errors
+            console.error(err.stack || err);
+            err.errors = err.errors || {};
+            self.errors = {};
+            Object.keys(err.errors || {}).forEach(function (key) {
+                var error = err.errors[key];
+                if (self.fields[key] instanceof fields.BaseField) {
+                    self.errors[key] = [error.type || error.message || error];
+                    self.fields[key].errors = self.errors[key];
                 }
-                callback({message: 'failed'});
-            }
-            else {
-                callback(null, object);
-            }
+            });
+            return callback(new Error(self));
         });
     }
 });
