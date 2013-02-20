@@ -4,45 +4,48 @@ if (!module.parent) console.error('Please don\'t call me directly.I am just the 
 var async = require('async')
     , _ = require('underscore');
 
-var Schema = new module.parent.mongoose_module.Schema({
-    name: {type: String, required: true}
-});
-
-Schema.methods.toString = function () {
-    return this.name;
-};
-
-exports.model = module.parent.mongoose_module.model('_MongooseAdminPermission', Schema);
 
 var permodel_permission = ['view', 'delete', 'create', 'update', 'order'];
 
 var permissions_by_name = {};
 
-exports.registerModel = function (modelName, permissions, callback) {
+module.exports.registerModel = function (modelName, permissions, callback) {
+    _.once(function () {
+        var mongoose = module.parent.mongoose;
+        var Schema = new mongoose.Schema({
+            name: {type: String, required: true}
+        });
+        Schema.methods.toString = function () {return this.name;};
+        module.exports.model = mongoose.model('_MongooseAdminPermission', Schema);
+    });
     if (typeof(permissions) === 'function' || typeof(permissions) === 'undefined') {
         callback = permissions;
         permissions = permodel_permission;
     }
     async.forEach(permissions, function (action, callback) {
-        exports.model.update({name: modelName + '_' + action}, {$set: {name: modelName + '_' + action}}, {upsert: true}, function (err) {
-            if (err)
-                callback(err);
-            else
-                exports.model.findOne({name: modelName + '_' + action}, function (err, doc) {
-                    if (doc)
+        module.exports.model.update(
+            {name: modelName + '_' + action},
+            {$set: {name: modelName + '_' + action}},
+            {upsert: true},
+            function (err) {
+                if (err) return callback(err);
+                module.exports.model.findOne({name: modelName + '_' + action}, function (err, doc) {
+                    if (doc) {
                         permissions_by_name[doc.name] = doc.id;
+                    }
                     callback(err);
                 });
-        });
+                return null;
+            }
+        );
     }, callback || function () {});
 };
 
-exports.getPermission = function (modelName, action) {
+module.exports.getPermission = function (modelName, action) {
     return permissions_by_name[modelName + '_' + action];
 };
 
-exports.hasPermissions = function (user, modelName, action) {
-    if (user.fields)
-        user = user.fields;
-    return user.is_superuser || _.indexOf(user.permissions, exports.getPermission(modelName, action)) > -1;
+module.exports.hasPermissions = function (user, modelName, action) {
+    user = user.fields || user;
+    return user.is_superuser || ~_.indexOf(user.permissions, module.exports.getPermission(modelName, action));
 };

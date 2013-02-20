@@ -5,9 +5,9 @@ var bcrypt = require('./crypt');
 exports.bcrypt = bcrypt;
 
 var AdminUserData = new module.parent.mongoose_module.Schema({
-    username: {type: String, required: true, unique: true},
-    passwordHash: {type: String, editable: false},
-    is_superuser: {type: Boolean, 'default': false},
+    username:{type:String, required:true, unique:true},
+    passwordHash:{type:String, editable:false},
+    is_superuser :{type:Boolean,'default':false},
     permissions: [
         {type: module.parent.mongoose_module.Schema.ObjectId, ref: '_MongooseAdminPermission'}
     ]
@@ -18,6 +18,8 @@ module.parent.mongoose_module.model('_MongooseAdminUser', AdminUserData);
 function MongooseAdminUser() {
     this.fields = {};
 }
+
+
 
 
 MongooseAdminUser.prototype.toSessionStore = function () {
@@ -33,6 +35,8 @@ MongooseAdminUser.prototype.toSessionStore = function () {
     return JSON.stringify(serialized);
 };
 
+
+
 MongooseAdminUser.fromSessionStore = function (sessionStore) {
     var sessionObject = JSON.parse(sessionStore);
     var adminUser = new MongooseAdminUser();
@@ -45,11 +49,13 @@ MongooseAdminUser.fromSessionStore = function (sessionStore) {
     return adminUser;
 };
 
+
+
 MongooseAdminUser.ensureExists = function (username, password, onReady) {
     var adminUser = new MongooseAdminUser();
-    var AdminUserModel = module.parent.mongoose_module.model('_MongooseAdminUser');
+    var adminUserModel = module.parent.mongoose.model('_MongooseAdminUser');
 
-    AdminUserModel.findOne({'username': username}, function (err, adminUserData) {
+    adminUserModel.findOne({'username': username}, function(err, adminUserData) {
         if (err) {
             console.log('Unable to check if admin user exists because: ' + err);
         } else {
@@ -75,9 +81,11 @@ MongooseAdminUser.ensureExists = function (username, password, onReady) {
     });
 };
 
+
+
 MongooseAdminUser.getByUsernamePassword = function (username, password, onReady) {
     var adminUser = new MongooseAdminUser();
-    var adminUserModel = module.parent.mongoose_module.model('_MongooseAdminUser');
+    var adminUserModel = module.parent.mongoose.model('_MongooseAdminUser');
 
     adminUserModel.findOne({'username': username}, function (err, adminUserData) {
         if (err) {
@@ -97,5 +105,3 @@ MongooseAdminUser.getByUsernamePassword = function (username, password, onReady)
         }
     });
 };
-
-exports.MongooseAdminUser = MongooseAdminUser;

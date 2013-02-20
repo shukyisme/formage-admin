@@ -86,7 +86,7 @@ exports.loadApi = function (app, path) {
         get_objects: function (req, filters, sorts, limit, offset, callback) {
             var self = this;
             var data = JSON.parse(filters.data);
-            var model = module.parent.mongoose_module.model(data.model);
+            var model = module.parent.mongoose.model(data.model);
             var query = data.query.replace(/__value__/g, escapeRegex(filters.query));
             model.find({$where: query}, function (err, results) {
                 if (results) {
