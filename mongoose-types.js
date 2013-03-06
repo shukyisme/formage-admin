@@ -1,5 +1,8 @@
 'use strict';
-if (!module.parent) console.error('Please don\'t call me directly.I am just the main app\'s minion.') || process.process.exit(1);
+if (!module.parent) {
+    console.error('Please don\'t call me directly.I am just the main app\'s minion.');
+    process.process.exit(1);
+}
 
 var util = require('util');
 
@@ -8,7 +11,7 @@ var CDN_PREFIX = '';
 
 
 var init = function () {
-    var File = function File(path, options) {
+    var File = function File (path, options) {
         File.super_.call(this, path, options);
     };
     util.inherits(File, mongoose_module.Schema.Types.Mixed);
@@ -27,7 +30,7 @@ var init = function () {
 
     exports.File = File;
 
-    var Picture = function Picture(path, options) {
+    var Picture = function Picture (path, options) {
         Picture.super_.call(this, path, options);
     };
     util.inherits(Picture, mongoose_module.Schema.Types.Mixed);
@@ -41,7 +44,7 @@ var init = function () {
     exports.Picture = Picture;
 
 
-    var Integer = function Integer(path, options) {
+    var Integer = function Integer (path, options) {
         Integer.super_.call(this, path, options);
     };
     util.inherits(Integer, mongoose_module.Schema.Types.Number);
@@ -55,7 +58,7 @@ var init = function () {
 
     exports.Integer = Integer;
 
-    var GeoPoint = function GeoPoint(path, options) {
+    var GeoPoint = function GeoPoint (path, options) {
         GeoPoint.super_.call(this, path, options);
     };
     util.inherits(GeoPoint, mongoose_module.Schema.Types.Mixed);
@@ -65,7 +68,7 @@ var init = function () {
     mongoose_module.Types.GeoPoint = Object;
     mongoose_module.Schema.Types.GeoPoint = GeoPoint;
 
-    var Text = function Text(path, options) {
+    var Text = function Text (path, options) {
         Text.super_.call(this, path, options);
     };
     util.inherits(Text, mongoose_module.Schema.Types.String);
@@ -75,7 +78,7 @@ var init = function () {
     mongoose_module.Types.Text = String;
     mongoose_module.Schema.Types.Text = Text;
 
-    var Html = function Html(path, options) {
+    var Html = function Html (path, options) {
         Html.super_.call(this, path, options);
     };
     util.inherits(Html, Text);

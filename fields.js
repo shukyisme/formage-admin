@@ -11,7 +11,8 @@ var widgets = require('./widgets'),
 	common = require('./common'),
 	path = require('path'),
 	fs = require('fs'),
-	util = require('util');
+	util = require('util'),
+    cloudinary = require('cloudinary');
 
 try {
     var knox = require('knox');
@@ -654,7 +655,7 @@ var PictureField = exports.PictureField = BaseField.extend({
         }
 
         if (req.files && req.files[self.name] && req.files[self.name].name) {
-            require('cloudinary').uploader.upload(req.files[self.name].path, function (result) {
+            cloudinary.uploader.upload(req.files[self.name].path, function (result) {
                 result.original_name = req.files[self.name].name;
                 result.original_size = req.files[self.name].size;
                 self.value = result;

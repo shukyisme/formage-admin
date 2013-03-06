@@ -6,7 +6,9 @@
  */
 
 var Class = require('sji'),
-    _ = require('underscore');
+    _ = require('underscore'),
+    util = require('util'),
+    cloudinary = require('cloudinary');
 
 
 function escape (str) {
@@ -64,7 +66,7 @@ exports.InputWidget = Widget.extend({
         this._super(options);
     },
     render: function (res) {
-        res.write('<input value="' + escape(this.value != null ? this.value : '') + '"');
+        res.write('<input' + (this.value != null ? ' value="' + escape(this.value) + '"' : '' ));
         this.render_attributes(res);
         res.write(' />');
         return this;
@@ -269,7 +271,7 @@ exports.ListWidget = Widget.extend({
         this._super(options);
     },
     render: function (res, render_template, render_item) {
-        res.write("<div class='nf_listfield' name='" + this.name + "'><div class='nf_hidden_template'>");
+        res.write('<div class="nf_listfield" name="' + this.name + '"><div class="nf_hidden_template">');
         render_template(res);
         res.write('</div><ul>');
         this.value = this.value || [];
@@ -290,7 +292,7 @@ exports.FileWidget = exports.InputWidget.extend({
     render: function (res) {
         this._super(res);
         if (this.value && this.value.path)
-            res.write('Clear<input type="checkbox" name="' + this.name + '_clear" value="Clear" /> <a href="' + this.value.url + '">' + this.value.path + '</a>');
+            res.write('<a href="' + this.value.url + '">' + this.value.path + '</a> <input type="checkbox" name="' + this.name + '_clear" value="Clear" /> Clear');
     }
 });
 
@@ -300,11 +302,23 @@ exports.PictureWidget = exports.InputWidget.extend({
         this._super('file', options);
     },
     render: function (res) {
+        if (this.value && this.value.url)
+            res.write(util.format(
+                '<a href="%s" target="_blank">%s</a> <input type="checkbox" name="%s_clear" value="Clear" /> Clear ',
+                this.value.url,
+                cloudinary.image(
+                    this.value.public_id, {
+                        format: 'png',
+                        width: 250,
+                        height: 100,
+                        crop: 'limit',
+                        alt: this.value.original_name,
+                        title: this.value.original_name
+                    }
+                ),
+                this.name
+            ));
         this._super(res);
-        if (!(this.value && this.value.url)) return;
-        var template = 'Clear<input type="checkbox" name="%s_clear" value="Clear" /><a href' + '="%s">%s</a>';
-        var html = util.format(template, this.name, this.value.url, this.value.original_name);
-        res.write(html);
     }
 });
 
