@@ -1,8 +1,9 @@
 'use strict';
 if (!module.parent) {
-    console.log('Please don\'t call me directly. I am just the main app\'s minion.');
+    console.log("Do not call formage directly. require()-ing is required.");
     process.exit(1);
 }
+
 var Class = require('sji'),
     _ = require('underscore'),
     async = require('async'),

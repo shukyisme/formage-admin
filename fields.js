@@ -1,14 +1,18 @@
 'use strict';
-if (!module.parent) { console.log('Please don\'t call me directly. I am just the main app\'s minion.'); process.exit(1); }
+if (!module.parent) {
+    console.log("Do not call formage directly. require()-ing is required.");
+    process.exit(1);
+}
 
-var widgets = require('./widgets');
-var async = require('async');
-var Class = require('sji');
-var _ = require('underscore');
-var common = require('./common');
-var path = require('path');
-var fs = require('fs');
-var util = require('util');
+var widgets = require('./widgets'),
+    async = require('async'),
+	Class = require('sji'),
+	_ = require('underscore'),
+	common = require('./common'),
+	path = require('path'),
+	fs = require('fs'),
+	util = require('util');
+
 try {
     var knox = require('knox');
 }
