@@ -6,29 +6,29 @@ if (!module.parent) {
 
 var path = require('path');
 
-exports.common = require('./common');
-exports.types = require('./mongoose-types');
-exports.forms = require('./forms');
-exports.fields = require('./fields');
-exports.widgets = require('./widgets');
+module.exports.common = require('./common');
+module.exports.types = require('./mongoose-types');
+module.exports.forms = require('./forms');
+module.exports.fields = require('./fields');
+module.exports.widgets = require('./widgets');
 
-exports.statics_path = path.join(__dirname, 'public');
-exports.mongoose_module = {};
-exports.models = {};
+module.exports.statics_path = path.join(__dirname, 'public');
+module.exports.mongoose_module = null;
+module.exports.models = null;
 
-exports.setAmazonCredentials = exports.fields.setAmazonCredentials;
+module.exports.setAmazonCredentials = module.exports.fields.setAmazonCredentials;
 
 
-exports.serve_static = function(app, express) {
-    app.use('/', express.static(exports.statics_path));
+module.exports.serve_static = function(app, express) {
+    app.use('/', express.static(module.exports.statics_path));
 };
 
-exports.loadTypes = function (mongoose) {
-    exports.mongoose_module = exports.mongoose_module || mongoose;
+module.exports.loadTypes = function (mongoose) {
+    module.mongoose_module = module.exports.mongoose_module = module.exports.mongoose_module || mongoose;
     exports.types.loadTypes(mongoose);
 };
 
-exports.register_models = function (models) {
-    exports.models = models;
-    exports.forms.set_models(models);
+module.exports.register_models = function (models) {
+    module.exports.models = models;
+    module.exports.forms.set_models(models);
 };
