@@ -344,7 +344,7 @@ var ListField_ = exports.ListField = BaseField.extend({
                         self.errors = _.union(self.errors, field.errors);
                         parent_errors[field_name] = _.clone(field.errors);
                     }
-                    else
+                    else {
                         output_data[field_name] = field.value;
                     }
                     cbk(null);
