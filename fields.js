@@ -323,21 +323,28 @@ var ListField_ = exports.ListField = BaseField.extend({
         var inner_files = {};
         self.children_errors = [];
 
-        function create_clean_func(field_name, post_data, file_data, output_data, old_value, parent_errors) {
+        function create_clean_func (field_name, post_data, file_data, output_data, old_value,parent_errors)//num,name,value)
+        {
             return function (cbk) {
                 var field = self.fields[field_name];
                 field = _.clone(field);
                 field.errors = [];
                 field.name = field_name;
-                var request_copy = _.extend({body: post_data, files: file_data}, req);
-                var old_field_value = (field_name in post_data) ? post_data[field_name] : (old_value.get ? old_value.get(field_name) : old_value[field_name] );
+                var old_body = req.body;
+                var request_copy = {};
+                for (var key in req)
+                    request_copy[key] = req[key];
+                request_copy.body = post_data;
+                request_copy.files = file_data;
+                var old_field_value = (typeof(post_data[field_name]) == 'undefined' || post_data[field_name] == null) ? (old_value.get ? old_value.get(field_name) : old_value[field_name] ) : post_data[field_name];
                 field.set(old_field_value, request_copy);
                 field.clean_value(request_copy, function (err) {
                     if (err) console.trace(err);
                     if (field.errors && field.errors.length) {
                         self.errors = _.union(self.errors, field.errors);
                         parent_errors[field_name] = _.clone(field.errors);
-                    } else {
+                    }
+                    else
                         output_data[field_name] = field.value;
                     }
                     cbk(null);
@@ -345,31 +352,30 @@ var ListField_ = exports.ListField = BaseField.extend({
             }
         }
 
-        req.body.forEach(function (field_name2) {
-            if (!~field_name2.indexOf(prefix)) return;
-            var suffix = field_name2.split(prefix)[1];
-            var next_ = suffix.indexOf('_');
-            var num = suffix.substring(0, next_);
-            var name = suffix.substring(next_ + 1);
-            var data = inner_body[num] || {};
-            inner_body[num] = data;
-            data[name] = req.body[field_name2];
-            //clean_funcs.push(create_clean_func(num,name,req.body[field_name2]));
-        });
-
-        req.files.forEach(function (field_name3) {
-            if (!~field_name3.indexOf(prefix)) return;
-            var suffix = field_name3.split(prefix)[1];
-            var next_ = suffix.indexOf('_');
-            var num = suffix.substring(0, next_);
-            var name = suffix.substring(next_ + 1);
-            var data = inner_files[num] || {};
-            inner_files[num] = data;
-            data[name] = req.files[field_name3];
-            //clean_funcs.push(create_clean_func(num,name,req.body[field_name3]));
-        });
-
-        //noinspection JSUnresolvedFunction
+        for (var field_name in req.body) {
+            if (field_name.indexOf(prefix, 0) > -1) {
+                var suffix = field_name.split(prefix)[1];
+                var next_ = suffix.indexOf('_');
+                var num = suffix.substring(0, next_);
+                var name = suffix.substring(next_ + 1);
+                var data = inner_body[num] || {};
+                inner_body[num] = data;
+                data[name] = req.body[field_name];
+                //clean_funcs.push(create_clean_func(num,name,req.body[field_name]));
+            }
+        }
+        for (var field_name in req.files) {
+            if (field_name.indexOf(prefix, 0) > -1) {
+                var suffix = field_name.split(prefix)[1];
+                var next_ = suffix.indexOf('_');
+                var num = suffix.substring(0, next_);
+                var name = suffix.substring(next_ + 1);
+                var data = inner_files[num] || {};
+                inner_files[num] = data;
+                data[name] = req.files[field_name];
+                //clean_funcs.push(create_clean_func(num,name,req.body[field_name]));
+            }
+        }
         var field_names = _.chain(Object.keys(inner_body))
             .union(Object.keys(inner_files))
             .unique()
@@ -380,22 +386,15 @@ var ListField_ = exports.ListField = BaseField.extend({
             var output_errors = {};
             self.value.push(output_data);
             self.children_errors.push(output_errors);
-            Object.keys(self.fields).forEach(function (field_name) {
-                clean_funcs.push(create_clean_func(
-                    field_name,
-                    inner_body[key] || {},
-                    inner_files[key] || {},
-                    output_data,
-                    old_list_value[key] || {},
-                    output_errors
-                ));
-            });
+            for (var field_name in self.fields) {
+                clean_funcs.push(create_clean_func(field_name, inner_body[key] || {}, inner_files[key] || {}, output_data, old_list_value[key] || {},output_errors));
+            }
         });
         async.parallel(clean_funcs, function (err) {
-            if (err) console.trace(err);
             for (var i = 0; i < self.value.length; i++) {
                 var new_dict = {};
-                self.value[i].forEach(function (key) { self.deep_write(new_dict, key, self.value[i][key]); });
+                for (var key in self.value[i])
+                    self.deep_write(new_dict, key, self.value[i][key]);
                 self.value[i] = new_dict;
                 if ('__self__' in self.value[i])
                     self.value[i] = self.value[i].__self__;
@@ -422,9 +421,13 @@ var ListField_ = exports.ListField = BaseField.extend({
             };
         }
 
-        Object.keys(self.fields).forEach(function (field) { funcs.push(pre_render_partial(field)); });
+        for (var field in self.fields) {
+            funcs.push(pre_render_partial(field));
+        }
         funcs.push(self.widget.pre_render);
-        async.parallel(funcs, callback);
+        async.parallel(funcs, function (err, results) {
+            callback(err);
+        });
         return self;
     },
     render: function (res) {
