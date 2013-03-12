@@ -41,27 +41,18 @@ exports.checkDependecies = function (model, id, callback) {
             }
         }
     }
-    var funcs = [];
-
-    function query_func(modelName) {
-        return function (cbk) {
-            Models[modelName].find({$or: models_to_query[modelName]}, cbk);
-        }
-    }
-
-    for (var modelName in models_to_query) {
-        funcs.push(query_func(modelName));
-    }
-    async.parallel(funcs, function (err, results) {
-        var all_results = [];
-        for (var i = 0; i < results.length; i++) {
-            if (results[i] && results[i].length) {
-                all_results = all_results.concat(results[i]);
-            }
-        }
-        callback(err, all_results);
+    var funcs = Object.keys(models_to_query).map(function(modelName) {
+        return function (cbk) {Models[modelName].find({$or: models_to_query[modelName]}, cbk);};
     });
+    async.parallel(
+        funcs,
+        function (err, results) {
+            var all_results = results.reduce(function(acc, res_batch) {return acc.concat(res_batch);}, []);
+            callback(err, all_results);
+        }
+    );
 };
+
 
 exports.unlinkDependencies = function (model, id, callback) {
     exports.checkDependecies(model, id, function (err, deps) {
