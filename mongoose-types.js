@@ -6,7 +6,7 @@ if (!module.parent) {
 
 var util = require('util');
 
-var mongoose_module = module.parent.mongoose_module;
+var mongoose_module = require.main.require('mongoose');
 var CDN_PREFIX = '';
 
 

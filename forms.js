@@ -13,9 +13,13 @@ var Class = require('sji'),
     mongoose_types = require('./mongoose-types');
 
 
-var Models = module.parent.models;
+var Models = {};
 exports.set_models = function (models) {
     Models = models;
+};
+
+exports.registerModel = function (modelName, model) {
+    Models[modelName] = models;
 };
 
 exports.checkDependecies = function (model, id, callback) {

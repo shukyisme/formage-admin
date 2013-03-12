@@ -13,8 +13,7 @@ module.exports.fields = require('./fields');
 module.exports.widgets = require('./widgets');
 
 module.exports.statics_path = path.join(__dirname, 'public');
-module.exports.mongoose_module = null;
-module.exports.models = null;
+module.mongoose_module = require.main.require('mongoose');
 
 module.exports.setAmazonCredentials = module.exports.fields.setAmazonCredentials;
 
@@ -29,6 +28,10 @@ module.exports.loadTypes = function (mongoose) {
 };
 
 module.exports.register_models = function (models) {
-    module.exports.models = models;
+    module.models = module.exports.models = models;
     module.exports.forms.set_models(models);
+};
+
+module.exports.registerModel = function (name, model) {
+    module.exports.forms.registerModel(name, model);
 };
