@@ -125,8 +125,8 @@ exports.DateWidget = exports.InputWidget.extend({
     init: function (options) {
         this._super('text', options);
         this.attrs.class.push('nf_datepicker');
-        this.static.js.push('/node-forms/js/bootstrap-datepicker.js');
-        this.static.css.push('/node-forms/css/datepicker.css');
+        this.static.js.push('/node-forms/datepicker/bootstrap-datepicker.js');
+        this.static.css.push('/node-forms/datepicker/datepicker.css');
     },
     render: function (res) {
         res.write('<div class="input-append date">');
