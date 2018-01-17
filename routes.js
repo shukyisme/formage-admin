@@ -231,7 +231,7 @@ function renderForm(res, form, model, allow_delete, clone,dialog,user) {
             var actions = (form.instance.isNew ? [] : model.options.actions || []).filter(function(action){
                 return permissions.hasPermissions(user, model.modelName,action.value);
             });
-            return res.render('document.jade', {
+            return res.render('document.pug', {
                 rootPath: MongooseAdmin.singleton.root,
                 adminTitle: MongooseAdmin.singleton.getAdminTitle(),
                 pageTitle: 'Admin - ' + model.model.label,
@@ -248,7 +248,7 @@ function renderForm(res, form, model, allow_delete, clone,dialog,user) {
                 errors: form.errors ? Object.keys(form.errors).length > 0 : false,
                 generalError:form.errors['__self__'] || '',
                 allow_delete: allow_delete,
-                layout: 'layout.jade',
+                layout: 'layout.pug',
                 dialog:dialog,
                 pretty: true,
                 editable: permissions.hasPermissions(user, model.modelName, 'update'),
@@ -354,8 +354,8 @@ var routes = {
     index: function (req, res) {
         MongooseAdmin.singleton.getRegisteredModels(req.admin_user, function (err, models) {
             if (err) return res.redirect(MongooseAdmin.singleton.buildPath('/error'));
-            return res.render('models.jade', {
-                layout: 'layout.jade',
+            return res.render('models.pug', {
+                layout: 'layout.pug',
                 pageTitle: 'Admin Site',
                 allModels: models,
                 renderedHead: '',
@@ -366,8 +366,8 @@ var routes = {
     },
 
     login: function (req, res) {
-        res.render('login.jade', {
-            layout: 'layout.jade',
+        res.render('login.pug', {
+            layout: 'layout.pug',
             pageTitle: 'Admin Login',
             adminTitle: MongooseAdmin.singleton.getAdminTitle(),
             rootPath: MongooseAdmin.singleton.root,
@@ -559,8 +559,8 @@ var routes = {
                     creatable: model.options.creatable !== false && permissions.hasPermissions(req.admin_user, name, 'create'),
                     dialog:isDialog
                 });
-                res.render('model.jade', {
-                    layout: 'layout.jade',
+                res.render('model.pug', {
+                    layout: 'layout.pug',
                     locals: res.locals
                 });
             });
@@ -631,7 +631,7 @@ var routes = {
                 var docName = doc.name || doc.title || doc.toString;
                 if(typeof(docName) == 'function')
                     docName = docName.call(doc);
-                res.render('dialog_callback.jade',{data:{id:doc.id,label:docName}});
+                res.render('dialog_callback.pug',{data:{id:doc.id,label:docName}});
             }
             else
                 return res.redirect(target_url);
@@ -652,7 +652,7 @@ var routes = {
 			var html = form.to_html(),
 				head = form.render_head();
 
-			return res.render('dialog.jade', {
+			return res.render('dialog.pug', {
 				rootPath: MongooseAdmin.singleton.root,
 				adminTitle: MongooseAdmin.singleton.getAdminTitle(),
 				pageTitle: 'Admin',
@@ -690,7 +690,7 @@ var routes = {
 			}
 			else{
 				var data = form.clean_values;
-				res.render('dialog_callback.jade',{data:data});
+				res.render('dialog_callback.pug',{data:data});
 			}
 		});
 	}
@@ -731,7 +731,7 @@ module.exports = function (admin, outer_app, root) {
     MongooseAdmin = admin;
 
     var app = require('express')();
-    app.engine('jade', require('jade').__express);
+    app.engine('pug', require('pug').__express);
     app.set('views', __dirname + '/views');
 
     app.use(multipartMiddleware);
@@ -757,8 +757,8 @@ module.exports = function (admin, outer_app, root) {
     app.get('/json/model/:collectionName/linkedDocumentsList', json_routes.linkedDocumentsList);
 	if(MongooseAdmin.singleton.tabs){
 		MongooseAdmin.singleton.tabs.forEach(function(tab){
-			tab.handler.engine('jade', require('jade').__express);
-			//tab.handler.set("view options", { layout: __dirname + "/views/layout.jade" });
+			tab.handler.engine('pug', require('pug').__express);
+			//tab.handler.set("view options", { layout: __dirname + "/views/layout.pug" });
             _.extend(tab.handler.locals,{rootPath:root,tab:tab.root});
 			tab.handler.use(auth(tab.permission));
 			tab.handler.loadRoutes();

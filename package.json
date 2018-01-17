@@ -26,7 +26,7 @@
   "dependencies": {
     "async": "",
     "formidable": "~1.0.14",
-    "jade": "~1.11.0",
+    "pug": "2.0.0-rc.4",
     "jest": "~0.1.40",
     "lodash": "^3.9.3",
     "multiparty": "^4.1.2",
@@ -38,7 +38,7 @@
   "bundleDependencies": [
     "lodash",
     "async",
-    "jade",
+    "pug",
     "sji",
     "jest",
     "cloudinary"

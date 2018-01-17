@@ -1,0 +1,11 @@
+html(lang='en')
+    head
+        meta(http-equiv='Content-type', content='text/html; charset=utf-8')
+        script.
+            var data = !{JSON.stringify(data)};
+            window.opener.postMessage(data,window.location.protocol + '//' + window.location.hostname + (window.location.port == 80 ? '' : ':' +window.location.port));
+            setTimeout(function(){
+                window.close();
+            },500);
+
+    body
